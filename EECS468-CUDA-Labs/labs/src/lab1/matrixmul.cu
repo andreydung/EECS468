@@ -156,8 +156,14 @@ void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P)
 	dim3 dimBlock(MATRIX_SIZE, MATRIX_SIZE);
 		
 	MatrixMulKernel<<<dimGrid, dimBlock>>>(M_gpu, N_gpu, P_gpu);	
+	
+	cudaThreadSynchronize();
 
 	CopyFromDeviceMatrix(P, P_gpu);
+	
+	cudaFree(M_gpu.elements);
+	cudaFree(N_gpu.elements);
+	cudaFree(P_gpu.elements);
 }
 
 // Allocate a device matrix of same size as M.
