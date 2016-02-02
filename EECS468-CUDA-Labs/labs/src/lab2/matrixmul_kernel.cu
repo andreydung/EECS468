@@ -51,8 +51,41 @@
 // Matrix multiplication kernel thread specification
 __global__ void MatrixMulKernel(Matrix M, Matrix N, Matrix P)
 {
+	__shared__ float tileM[TILE_DIM][TILE_DIM];
+	__shared__ float tileN[TILE_DIM][TILE_DIM];
 
+	unsigned int N_Tile = (M.width - 1)/TILE_DIM + 1; //ceil of integer division
+	
+	unsigned int yIndex = blockIdx.y * TILE_DIM + threadIdx.y;
+	unsigned int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
 
+	float Pval = 0;
+	for (int k = 0; k < N_Tile; k++) {
+		// bring data from global memory into shared memory
+		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) {
+			tileM[threadIdx.y][threadIdx.x] = M.elements[yIndex*M.width + k*TILE_DIM + threadIdx.x];
+		} else {
+			tileM[threadIdx.y][threadIdx.x] = 0;
+		}	
+		
+		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) {
+			tileN[threadIdx.y][threadIdx.x] = N.elements[(k*TILE_DIM + threadIdx.y)*N.width + xIndex]; 
+		} else {
+			tileN[threadIdx.y][threadIdx.x] = 0;
+		}
+
+		__syncthreads();
+	
+		// tiled multiplication
+		for (int i = 0; i < TILE_DIM; i++) {
+			Pval += tileM[threadIdx.y][i] * tileN[i][threadIdx.x];
+		}
+		__syncthreads();
+	}
+
+	if ((yIndex < P.height) && (xIndex < P.width)) {
+		P.elements[yIndex*P.width + xIndex] = Pval;
+	}
 }
 
 #endif // #ifndef _MATRIXMUL_KERNEL_H_

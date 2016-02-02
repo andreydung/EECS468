@@ -36,7 +36,7 @@
 #ifndef _MATRIXMUL_H_
 #define _MATRIXMUL_H_
 
-
+#define TILE_DIM 2
 // Matrix Structure declaration
 typedef struct {
     unsigned int width;

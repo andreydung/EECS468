@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 	Matrix  P;
 	int errorM = 0, errorN = 0;
 	
-	srand(52);
+	srand(time(NULL));
 	
 	if(argc != 5 && argc != 4) 
 	{
@@ -153,8 +153,16 @@ void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P)
 	CopyToDeviceMatrix(Pd, P); // Clear memory
 
 	// Setup the execution configuration
+	dim3 dimBlock(TILE_DIM, TILE_DIM, 1);
+	dim3 dimGrid((P.width - 1)/TILE_DIM + 1, (P.height - 1)/TILE_DIM + 1, 1);
 
+	printf("dimGrid: %d %d \n", dimGrid.y, dimGrid.x);
+	printf("dim M: %d %d \n", M.height, M.width);
+	printf("dim N: %d %d \n", N.height, N.width);
+	printf("dim P: %d %d \n", P.height, P.width);
+	
 	// Launch the device computation threads!
+	MatrixMulKernel<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
 
 	// Read P from the device
 	CopyFromDeviceMatrix(P, Pd); 
@@ -186,7 +194,7 @@ Matrix AllocateMatrix(int height, int width, int init)
     int size = M.width * M.height;
     M.elements = NULL;
     
-    // don't allocate memory on option 2
+   // don't allocate memory on option 2
     if(init == 2)
 		return M;
 		
