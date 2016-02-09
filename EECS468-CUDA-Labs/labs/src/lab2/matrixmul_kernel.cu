@@ -49,7 +49,7 @@
 //! @param g_odata  output data in global memory
 ////////////////////////////////////////////////////////////////////////////////
 // Matrix multiplication kernel thread specification
-__global__ void MatrixMulKernel2(Matrix M, Matrix N, Matrix P)
+__global__ void MatrixMulKernel(Matrix M, Matrix N, Matrix P)
 {
 	__shared__ float tileM[TILE_DIM*TILE_DIM*2];
 	//__shared__ float tileN[TILE_DIM*TILE_DIM];
