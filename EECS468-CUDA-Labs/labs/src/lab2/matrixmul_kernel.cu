@@ -60,30 +60,208 @@ __global__ void MatrixMulKernel(Matrix M, Matrix N, Matrix P)
 	unsigned int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
 
 	float Pval = 0;
-	for (int k = 0; k < N_Tile; k++) {
+	for (int k = 0; k < N_Tile; k++) 
+	{
 		// bring data from global memory into shared memory
-		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) {
+		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) 
+		{
 			tileM[threadIdx.y][threadIdx.x] = M.elements[yIndex*M.width + k*TILE_DIM + threadIdx.x];
-		} else {
+		} 
+		else 
+		{
 			tileM[threadIdx.y][threadIdx.x] = 0;
 		}	
 		
-		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) {
+		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) 
+		{
 			tileN[threadIdx.y][threadIdx.x] = N.elements[(k*TILE_DIM + threadIdx.y)*N.width + xIndex]; 
-		} else {
+		} 
+		else 
+		{
 			tileN[threadIdx.y][threadIdx.x] = 0;
 		}
 
 		__syncthreads();
 	
 		// tiled multiplication
-		for (int i = 0; i < TILE_DIM; i++) {
+		for (int i = 0; i < TILE_DIM; i++) 
+		{
 			Pval += tileM[threadIdx.y][i] * tileN[i][threadIdx.x];
 		}
 		__syncthreads();
 	}
 
-	if ((yIndex < P.height) && (xIndex < P.width)) {
+	if ((yIndex < P.height) && (xIndex < P.width)) 
+	{
+		P.elements[yIndex*P.width + xIndex] = Pval;
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! Simple test kernel for device functionality 1-D accessing and combining memory
+//! @param g_idata  input data in global memory
+//! @param g_odata  output data in global memory
+////////////////////////////////////////////////////////////////////////////////
+// Matrix multiplication kernel thread specification
+__global__ void MatrixMulKernel2(Matrix M, Matrix N, Matrix P)
+{
+	__shared__ float tileM[TILE_DIM*TILE_DIM*2];
+	//__shared__ float tileN[TILE_DIM*TILE_DIM];
+
+	unsigned int N_Tile = (M.width - 1)/TILE_DIM + 1; //ceil of integer division
+	unsigned int tileOffset = TILE_DIM*TILE_DIM;
+
+	unsigned int yIndex = blockIdx.y * TILE_DIM + threadIdx.y;
+	unsigned int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
+	
+
+	float Pval = 0;
+	for (int k = 0; k < N_Tile; k++) 
+	{
+		// bring data from global memory into shared memory
+		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) 
+		{
+			tileM[threadIdx.y*TILE_DIM + threadIdx.x] = M.elements[yIndex*M.width + k*TILE_DIM + threadIdx.x];
+		} 
+		else 
+		{
+			tileM[threadIdx.y*TILE_DIM + threadIdx.x] = 0;
+		}	
+		
+		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) 
+		{
+			tileM[tileOffset + threadIdx.y*TILE_DIM + threadIdx.x] = N.elements[(k*TILE_DIM + threadIdx.y)*N.width + xIndex]; 
+		} 
+		else 
+		{
+			tileM[tileOffset + threadIdx.y*TILE_DIM + threadIdx.x] = 0;
+		}
+
+		__syncthreads();
+	
+		// tiled multiplication
+		for (int i = 0; i < TILE_DIM; i++) 
+		{
+			Pval += tileM[threadIdx.y*TILE_DIM + i] * tileM[tileOffset + i*TILE_DIM + threadIdx.x];
+		}
+		__syncthreads();
+	}
+
+	if ((yIndex < P.height) && (xIndex < P.width)) 
+	{
+		P.elements[yIndex*P.width + xIndex] = Pval;
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//! Simple test kernel for device functionality 1-D accessing of memory
+//! @param g_idata  input data in global memory
+//! @param g_odata  output data in global memory
+////////////////////////////////////////////////////////////////////////////////
+// Matrix multiplication kernel thread specification
+
+__global__ void MatrixMulKernel3(Matrix M, Matrix N, Matrix P)
+{
+	__shared__ float tileM[TILE_DIM*TILE_DIM];
+	__shared__ float tileN[TILE_DIM*TILE_DIM];
+
+	unsigned int N_Tile = (M.width - 1)/TILE_DIM + 1; //ceil of integer division
+	
+	unsigned int yIndex = blockIdx.y * TILE_DIM + threadIdx.y;
+	unsigned int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
+
+	float Pval = 0;
+	for (int k = 0; k < N_Tile; k++) 
+	{
+		// bring data from global memory into shared memory
+		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) 
+		{
+			tileM[threadIdx.y*TILE_DIM + threadIdx.x] = M.elements[yIndex*M.width + k*TILE_DIM + threadIdx.x];
+		} 
+		else 
+		{
+			tileM[threadIdx.y*TILE_DIM + threadIdx.x] = 0;
+		}	
+		
+		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) 
+		{
+			tileN[threadIdx.y*TILE_DIM + threadIdx.x] = N.elements[(k*TILE_DIM + threadIdx.y)*N.width + xIndex]; 
+		} 
+		else 
+		{
+			tileN[threadIdx.y*TILE_DIM + threadIdx.x] = 0;
+		}
+
+		__syncthreads();
+	
+		// tiled multiplication
+		for (int i = 0; i < TILE_DIM; i++) 
+		{
+			Pval += tileM[threadIdx.y*TILE_DIM + i] * tileN[i*TILE_DIM + threadIdx.x];
+		}
+		__syncthreads();
+	}
+
+	if ((yIndex < P.height) && (xIndex < P.width)) 
+	{
+		P.elements[yIndex*P.width + xIndex] = Pval;
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//! Simple test kernel for device functionality 1-D accessing and combined with padding
+//! @param g_idata  input data in global memory
+//! @param g_odata  output data in global memory
+////////////////////////////////////////////////////////////////////////////////
+// Matrix multiplication kernel thread specification
+__global__ void MatrixMulKernel4(Matrix M, Matrix N, Matrix P)
+{
+	__shared__ float tileM[TILE_DIM*(TILE_DIM+1)*2];
+	//__shared__ float tileN[TILE_DIM*TILE_DIM];
+
+	unsigned int N_Tile = (M.width - 1)/TILE_DIM + 1; //ceil of integer division
+	unsigned int tileOffset = TILE_DIM*(TILE_DIM+1);
+
+	unsigned int yIndex = blockIdx.y * TILE_DIM + threadIdx.y;
+	unsigned int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
+	
+
+	float Pval = 0;
+	for (int k = 0; k < N_Tile; k++) 
+	{
+		// bring data from global memory into shared memory
+		if ((yIndex < M.height) && (k*TILE_DIM + threadIdx.x) < M.width) 
+		{
+			tileM[threadIdx.y*(TILE_DIM+1) + threadIdx.x] = M.elements[yIndex*M.width + k*TILE_DIM + threadIdx.x];
+		} 
+		else 
+		{
+			tileM[threadIdx.y*(TILE_DIM+1) + threadIdx.x] = 0;
+		}	
+		
+		if ((k*TILE_DIM + threadIdx.y) < N.height && (xIndex < N.width)) 
+		{
+			tileM[tileOffset + threadIdx.y*(TILE_DIM+1) + threadIdx.x] = N.elements[(k*TILE_DIM + threadIdx.y)*N.width + xIndex]; 
+		} 
+		else 
+		{
+			tileM[tileOffset + threadIdx.y*(TILE_DIM+1) + threadIdx.x] = 0;
+		}
+
+		__syncthreads();
+	
+		// tiled multiplication
+		for (int i = 0; i < TILE_DIM; i++) 
+		{
+			Pval += tileM[threadIdx.y*(TILE_DIM+1) + i] * tileM[tileOffset + i*(TILE_DIM+1) + threadIdx.x];
+		}
+		__syncthreads();
+	}
+
+	if ((yIndex < P.height) && (xIndex < P.width)) 
+	{
 		P.elements[yIndex*P.width + xIndex] = Pval;
 	}
 }
