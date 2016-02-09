@@ -49,20 +49,6 @@
 // includes, kernels
 #include <matrixmul_kernel.cu>
 
-
-
-/////////////////////////////////////////////////////////////////////
-// NOTES :
-// 	Without optimization...
-//	seed: NULL
-// 	dimGrid: 483 473 
-//	dim M: 966 359 
-//	dim N: 359 946 
-//	dim P: 966 946 
-//	Completed in: 73.229347 ms
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // declarations, forward
 
@@ -79,12 +65,6 @@ void FreeDeviceMatrix(Matrix* M);
 void FreeMatrix(Matrix* M);
 
 void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P);
-void MatrixMulOnDevice2(const Matrix M, const Matrix N, Matrix P);
-void MatrixMulOnDevice3(const Matrix M, const Matrix N, Matrix P);
-void MatrixMulOnDevice4(const Matrix M, const Matrix N, Matrix P);
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Program main
@@ -94,12 +74,9 @@ int main(int argc, char** argv) {
 	Matrix  M;
 	Matrix  N;
 	Matrix  P;
-	Matrix  Pp;
-	Matrix  Pp1;
 	int errorM = 0, errorN = 0;
 	
-	srand(NULL);
-	//srand(time(NULL));
+	srand(52);
 	
 	if(argc != 5 && argc != 4) 
 	{
@@ -107,8 +84,6 @@ int main(int argc, char** argv) {
 		M  = AllocateMatrix(rand() % 1024, rand() % 1024, 1);
 		N  = AllocateMatrix(M.width, rand() % 1024, 1);
 		P  = AllocateMatrix(M.height, N.width, 0);
-		Pp  = AllocateMatrix(M.height, N.width, 0);
-		Pp1  = AllocateMatrix(M.height, N.width, 0);
 	}
 	else
 	{
@@ -124,10 +99,6 @@ int main(int argc, char** argv) {
 		M  = AllocateMatrix(params[0], params[1], 0);
 		N  = AllocateMatrix(params[1], params[2], 0);		
 		P  = AllocateMatrix(params[0], params[2], 0);
-		Pp  = AllocateMatrix(params[0], params[2], 0);
-		Pp1  = AllocateMatrix(params[0], params[2], 0);
-
-
 		errorM = ReadFile(&M, argv[2]);
 		errorN = ReadFile(&N, argv[3]);
 		if(errorM  || errorN )
@@ -150,52 +121,6 @@ int main(int argc, char** argv) {
 	CUTBoolean res = cutComparefe(reference.elements, P.elements, P.height*P.width, 0.001f);
 	printf("Test %s\n", (1 == res) ? "PASSED" : "FAILED");
 
-	printf("Attempting version 2\n");
-
-	// M * N on the device
-	MatrixMulOnDevice2(M, N, Pp);
-    
-	printf("GPU computation complete\n");
-	// compute the matrix multiplication on the CPU for comparison
-	//Matrix reference = AllocateMatrix(P.height, P.width, 0);
-	//computeGold(reference.elements, M.elements, N.elements, M.height, M.width, N.width);
-        
-	printf("CPU computation complete\n");
-	// in this case check if the result is equivalent to the expected soluion
-	res = cutComparefe(reference.elements, Pp.elements, Pp.height*Pp.width, 0.001f);
-	printf("Test %s\n", (1 == res) ? "PASSED" : "FAILED");
-	
-	printf("Attempting version 3\n");
-
-	// M * N on the device
-	MatrixMulOnDevice3(M, N, Pp);
-    
-	printf("GPU computation complete\n");
-	// compute the matrix multiplication on the CPU for comparison
-	//Matrix reference = AllocateMatrix(P.height, P.width, 0);
-	//computeGold(reference.elements, M.elements, N.elements, M.height, M.width, N.width);
-        
-	printf("CPU computation complete\n");
-	// in this case check if the result is equivalent to the expected soluion
-	res = cutComparefe(reference.elements, Pp.elements, Pp.height*Pp.width, 0.001f);
-	printf("Test %s\n", (1 == res) ? "PASSED" : "FAILED");
-
-	printf("Attempting version 4\n");
-
-	// M * N on the device
-	MatrixMulOnDevice4(M, N, Pp1);
-    
-	printf("GPU computation complete\n");
-	// compute the matrix multiplication on the CPU for comparison
-	//Matrix reference = AllocateMatrix(P.height, P.width, 0);
-	//computeGold(reference.elements, M.elements, N.elements, M.height, M.width, N.width);
-        
-	printf("CPU computation complete\n");
-	// in this case check if the result is equivalent to the expected soluion
-	res = cutComparefe(reference.elements, Pp1.elements, Pp1.height*Pp1.width, 0.001f);
-	printf("Test %s\n", (1 == res) ? "PASSED" : "FAILED");
-
-
 	if(argc == 5)
 	{
 		WriteFile(P, argv[4]);
@@ -209,9 +134,6 @@ int main(int argc, char** argv) {
 	FreeMatrix(&M);
 	FreeMatrix(&N);
 	FreeMatrix(&P);
-	FreeMatrix(&Pp);
-	FreeMatrix(&Pp1);
-
 	return 0;
 }
 
@@ -220,14 +142,6 @@ int main(int argc, char** argv) {
 ////////////////////////////////////////////////////////////////////////////////
 void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P)
 {
-
-	// create a timer for profiling
-	cudaEvent_t start, stop;
-	float time;
-
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
 	// Load M and N to the device
 	Matrix Md = AllocateDeviceMatrix(M);
 	CopyToDeviceMatrix(Md, M);
@@ -247,187 +161,13 @@ void MatrixMulOnDevice(const Matrix M, const Matrix N, Matrix P)
 	printf("dim N: %d %d \n", N.height, N.width);
 	printf("dim P: %d %d \n", P.height, P.width);
 	
-	cudaEventRecord( start, 0 );
 	// Launch the device computation threads!
 	MatrixMulKernel<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
-	
-	cudaThreadSynchronize();
-	
-	cudaEventRecord( stop, 0 );
-	cudaEventSynchronize( stop );
 
-	cudaEventElapsedTime( &time, start, stop );
-	cudaEventDestroy( start );
-	cudaEventDestroy( stop );
+	cudaThreadSynchronize();
 
 	// Read P from the device
 	CopyFromDeviceMatrix(P, Pd); 
-
-	printf("Completed in: %f ms\n", time);
-
-	// Free device matrices
-	FreeDeviceMatrix(&Md);
-	FreeDeviceMatrix(&Nd);
-	FreeDeviceMatrix(&Pd);
-}
-////////////////////////////////////////////////////////////////////////////////
-//! Run a simple test for CUDA
-////////////////////////////////////////////////////////////////////////////////
-void MatrixMulOnDevice2(const Matrix M, const Matrix N, Matrix P)
-{
-	
-
-	// create a timer for profiling
-	cudaEvent_t start, stop;
-	float time;
-
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	// Load M and N to the device
-	Matrix Md = AllocateDeviceMatrix(M);
-	CopyToDeviceMatrix(Md, M);
-	Matrix Nd = AllocateDeviceMatrix(N);
-	CopyToDeviceMatrix(Nd, N);
-
-	// Allocate P on the device
-	Matrix Pd = AllocateDeviceMatrix(P);
-	CopyToDeviceMatrix(Pd, P); // Clear memory
-
-	// Setup the execution configuration
-	dim3 dimBlock(TILE_DIM, TILE_DIM, 1);
-	dim3 dimGrid((P.width - 1)/TILE_DIM + 1, (P.height - 1)/TILE_DIM + 1, 1);
-
-	printf("dimGrid: %d %d \n", dimGrid.y, dimGrid.x);
-	printf("dim M: %d %d \n", M.height, M.width);
-	printf("dim N: %d %d \n", N.height, N.width);
-	printf("dim P: %d %d \n", P.height, P.width);
-	
-	cudaEventRecord( start, 0 );
-	// Launch the device computation threads!
-	MatrixMulKernel2<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
-	
-	cudaThreadSynchronize();
-	
-	cudaEventRecord( stop, 0 );
-	cudaEventSynchronize( stop );
-
-	cudaEventElapsedTime( &time, start, stop );
-	cudaEventDestroy( start );
-	cudaEventDestroy( stop );
-
-	// Read P from the device
-	CopyFromDeviceMatrix(P, Pd); 
-
-	printf("Completed in: %f ms\n", time);
-
-	// Free device matrices
-	FreeDeviceMatrix(&Md);
-	FreeDeviceMatrix(&Nd);
-	FreeDeviceMatrix(&Pd);
-}
-
-void MatrixMulOnDevice3(const Matrix M, const Matrix N, Matrix P)
-{
-	
-
-	// create a timer for profiling
-	cudaEvent_t start, stop;
-	float time;
-
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	// Load M and N to the device
-	Matrix Md = AllocateDeviceMatrix(M);
-	CopyToDeviceMatrix(Md, M);
-	Matrix Nd = AllocateDeviceMatrix(N);
-	CopyToDeviceMatrix(Nd, N);
-
-	// Allocate P on the device
-	Matrix Pd = AllocateDeviceMatrix(P);
-	CopyToDeviceMatrix(Pd, P); // Clear memory
-
-	// Setup the execution configuration
-	dim3 dimBlock(TILE_DIM, TILE_DIM, 1);
-	dim3 dimGrid((P.width - 1)/TILE_DIM + 1, (P.height - 1)/TILE_DIM + 1, 1);
-
-	printf("dimGrid: %d %d \n", dimGrid.y, dimGrid.x);
-	printf("dim M: %d %d \n", M.height, M.width);
-	printf("dim N: %d %d \n", N.height, N.width);
-	printf("dim P: %d %d \n", P.height, P.width);
-	
-	cudaEventRecord( start, 0 );
-	// Launch the device computation threads!
-	MatrixMulKernel3<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
-	
-	cudaThreadSynchronize();
-	
-	cudaEventRecord( stop, 0 );
-	cudaEventSynchronize( stop );
-
-	cudaEventElapsedTime( &time, start, stop );
-	cudaEventDestroy( start );
-	cudaEventDestroy( stop );
-
-	// Read P from the device
-	CopyFromDeviceMatrix(P, Pd); 
-
-	printf("Completed in: %f ms\n", time);
-
-	// Free device matrices
-	FreeDeviceMatrix(&Md);
-	FreeDeviceMatrix(&Nd);
-	FreeDeviceMatrix(&Pd);
-}
-
-void MatrixMulOnDevice4(const Matrix M, const Matrix N, Matrix P)
-{
-	
-
-	// create a timer for profiling
-	cudaEvent_t start, stop;
-	float time;
-
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	// Load M and N to the device
-	Matrix Md = AllocateDeviceMatrix(M);
-	CopyToDeviceMatrix(Md, M);
-	Matrix Nd = AllocateDeviceMatrix(N);
-	CopyToDeviceMatrix(Nd, N);
-
-	// Allocate P on the device
-	Matrix Pd = AllocateDeviceMatrix(P);
-	CopyToDeviceMatrix(Pd, P); // Clear memory
-
-	// Setup the execution configuration
-	dim3 dimBlock(TILE_DIM, TILE_DIM, 1);
-	dim3 dimGrid((P.width - 1)/TILE_DIM + 1, (P.height - 1)/TILE_DIM + 1, 1);
-
-	printf("dimGrid: %d %d \n", dimGrid.y, dimGrid.x);
-	printf("dim M: %d %d \n", M.height, M.width);
-	printf("dim N: %d %d \n", N.height, N.width);
-	printf("dim P: %d %d \n", P.height, P.width);
-	
-	cudaEventRecord( start, 0 );
-	// Launch the device computation threads!
-	MatrixMulKernel4<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
-	
-	cudaThreadSynchronize();
-	
-	cudaEventRecord( stop, 0 );
-	cudaEventSynchronize( stop );
-
-	cudaEventElapsedTime( &time, start, stop );
-	cudaEventDestroy( start );
-	cudaEventDestroy( stop );
-
-	// Read P from the device
-	CopyFromDeviceMatrix(P, Pd); 
-
-	printf("Completed in: %f ms\n", time);
 
 	// Free device matrices
 	FreeDeviceMatrix(&Md);
@@ -456,7 +196,7 @@ Matrix AllocateMatrix(int height, int width, int init)
     int size = M.width * M.height;
     M.elements = NULL;
     
-   // don't allocate memory on option 2
+    // don't allocate memory on option 2
     if(init == 2)
 		return M;
 		
