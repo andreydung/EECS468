@@ -1,0 +1,17 @@
+Output:
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z15MatrixMulKernel6MatrixS_S_' for 'sm_30'
+ptxas info    : Function properties for _Z15MatrixMulKernel6MatrixS_S_
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 25 registers, 2048 bytes smem, 392 bytes cmem[0]
+
+TILE_WIDTH is 16
+Shared Memory constraint: Nblock * 2048 < 49152
+Register constraint: Nblock * 256 * 25 < 65536
+Max number of threads per multiprocessor constraint: Nblock * 256 < 2048
+
+Nblock is 8.
+
+Total number of theads: 8*8*256 = 16384
+
