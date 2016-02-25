@@ -1,5 +1,6 @@
 #define HISTO_WIDTH  1024
 #define HISTO_HEIGHT 1
+#define BIN_COUNT 1024
 #define HISTO_LOG 10
 
 #define UINT8_MAX 255

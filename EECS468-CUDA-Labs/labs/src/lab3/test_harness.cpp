@@ -84,24 +84,40 @@ int main(int argc, char* argv[])
     uint32_t **input = generate_histogram_bins();
 
     TIME_IT("ref_2dhisto",
-            1000,
+            10,
             ref_2dhisto(input, INPUT_HEIGHT, INPUT_WIDTH, gold_bins);)
+		
+    /* Include your setup code below (temp variables, function calls, etc.) */	
+	// from alloc_2d code padding, 
+	// use padded width when access input data from pointer
+	const int ARRAY_BYTES = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80) * sizeof(uint32_t);
+	const int BIN_BYTES = HISTO_HEIGHT * HISTO_WIDTH * sizeof(int);
 
-    /* Include your setup code below (temp variables, function calls, etc.) */
+	uint32_t* in_gpu = (uint32_t*) AllocateDevice(ARRAY_BYTES);
+	int* bin_gpu = (int*) AllocateDevice(BIN_BYTES);
 
-
-
+	CopyToDevice(in_gpu, *input, ARRAY_BYTES);
+	
     /* End of setup code */
 
     /* This is the call you will use to time your parallel implementation */
-    TIME_IT("opt_2dhisto",
-            1000,
-            opt_2dhisto( /*Define your own function parameters*/ );)
-
+  /*  
+	TIME_IT("opt_2dhisto",
+            10,
+            opt_2dhisto(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu );)
+*/
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 
+//	 opt_2dhisto(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu );	
+/*
+	 int* result = (int *) malloc(HISTO_HEIGHT * HISTO_WIDTH*sizeof(int));
+	 CopyFromDevice(bin_gpu, result, HISTO_HEIGHT * HISTO_WIDTH * sizeof(int));
 
-
+	for (int i = 0; i < HISTO_HEIGHT*HISTO_WIDTH; i++) {
+		kernel_bins[i] = (unsigned char) result[i];
+//		printf("%d ", result[i]);	
+	}
+*/
     /* End of teardown code */
 
     int passed=1;
