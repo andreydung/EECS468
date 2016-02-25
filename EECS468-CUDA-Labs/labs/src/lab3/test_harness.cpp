@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 			kernel_bins[i] = (unsigned char) result[i];
 
 		if (gold_bins[i] != kernel_bins[i])
-			printf("result: %d  correct: %d\n", kernel_bins[i], gold_bins[i]);	
+			printf("result: %d  correct: %d position: %d\n", result[i], gold_bins[i], i);	
 	}
 
     /* End of teardown code */

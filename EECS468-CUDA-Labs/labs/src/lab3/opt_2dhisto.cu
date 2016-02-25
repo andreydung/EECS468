@@ -6,10 +6,14 @@
 #include "util.h"
 #include "ref_2dhisto.h"
 
+__device__ const int INPUT_WIDTH_PADDED = (INPUT_WIDTH + 128) & 0xFFFFFF80;
+
 __global__ void simple_histogram(int *bin, uint32_t *data, const int dataN) {
 	int pos = threadIdx.x + blockDim.x * blockIdx.x;
-	uint32_t item = data[pos] % BIN_COUNT;
-	atomicAdd(&(bin[item]), 1);
+	if (pos % INPUT_WIDTH_PADDED < INPUT_WIDTH) {
+		uint32_t item = data[pos] % BIN_COUNT;
+		atomicAdd(&(bin[item]), 1);
+	}
 }
 
 /*
@@ -42,13 +46,14 @@ void opt_2dhisto(uint32_t *input, size_t height, size_t width, int* bins)
        histogramming kernel. Any memory allocations and
        transfers must be done outside this function */
 	cudaMemset(bins, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
-	const int ARRAY_SIZE = INPUT_HEIGHT * INPUT_WIDTH;	
+	
+	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
+
 	simple_histogram<<<ARRAY_SIZE/64, 64>>>(bins, input, height * width);
 	cudaThreadSynchronize();
 }
 
 /* Include below the implementation of any other functions you need */
-
 void CopyToDevice(void* device, void* host, size_t size) {
 	cudaError_t err = cudaMemcpy(device, host, size, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) {

@@ -5,7 +5,6 @@
 #define INPUT_WIDTH  3984
 #define INPUT_HEIGHT 4096
 
-
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
