@@ -36,6 +36,19 @@ __global__ void histogram(uint *d_Result, uint *d_Data, int dataN) {
 }
 */
 
+void opt_2dhisto(uint32_t *input, size_t height, size_t width, int* bins)
+{
+    /* This function should only contain a call to the GPU 
+       histogramming kernel. Any memory allocations and
+       transfers must be done outside this function */
+	cudaMemset(bins, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
+	const int ARRAY_SIZE = INPUT_HEIGHT * INPUT_WIDTH;	
+	simple_histogram<<<ARRAY_SIZE/64, 64>>>(bins, input, height * width);
+	cudaThreadSynchronize();
+}
+
+/* Include below the implementation of any other functions you need */
+
 void CopyToDevice(void* device, void* host, size_t size) {
 	cudaError_t err = cudaMemcpy(device, host, size, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) {
@@ -61,20 +74,4 @@ void* AllocateDevice(size_t size) {
 	};
 	return out;
 }
-
-void opt_2dhisto(uint32_t *input, size_t height, size_t width, int* bins)
-{
-    /* This function should only contain a call to the GPU 
-       histogramming kernel. Any memory allocations and
-       transfers must be done outside this function */
-	cudaMemset(bins, 0x41, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
-	
-/*	
-	const int ARRAY_SIZE = INPUT_HEIGHT * INPUT_WIDTH;	
-	simple_histogram<<<ARRAY_SIZE/64, 64>>>(bins, input, height * width);
-	cudaThreadSynchronize();
-*/	
-}
-
-/* Include below the implementation of any other functions you need */
 

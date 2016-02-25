@@ -108,16 +108,21 @@ int main(int argc, char* argv[])
 */
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 
-//	 opt_2dhisto(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu );	
-/*
+	 opt_2dhisto(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu );	
+
 	 int* result = (int *) malloc(HISTO_HEIGHT * HISTO_WIDTH*sizeof(int));
 	 CopyFromDevice(bin_gpu, result, HISTO_HEIGHT * HISTO_WIDTH * sizeof(int));
 
 	for (int i = 0; i < HISTO_HEIGHT*HISTO_WIDTH; i++) {
-		kernel_bins[i] = (unsigned char) result[i];
-//		printf("%d ", result[i]);	
+		if (result[i] > 255)
+			kernel_bins[i] = 255;
+		else
+			kernel_bins[i] = (unsigned char) result[i];
+
+		if (gold_bins[i] != kernel_bins[i])
+			printf("result: %d  correct: %d\n", kernel_bins[i], gold_bins[i]);	
 	}
-*/
+
     /* End of teardown code */
 
     int passed=1;
