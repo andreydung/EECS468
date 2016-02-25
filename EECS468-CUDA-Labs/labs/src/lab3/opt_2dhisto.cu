@@ -16,6 +16,15 @@ __global__ void simple_histogram(int *bin, uint32_t *data, const int dataN) {
 	}
 }
 
+__global__ void clampToChar(int *bin, uint8_t* out) {
+	if (bin[threadIdx.x] > 255)
+		out[threadIdx.x] = 255;
+	if (bin[threadIdx.x] < 0)
+		out[threadIdx.x] = 0;
+	else
+		out[threadIdx.x] = bin[threadIdx.x];
+}
+
 /*
 __global__ void histogram(uint *d_Result, uint *d_Data, int dataN) {
 	const int globalTid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -40,7 +49,7 @@ __global__ void histogram(uint *d_Result, uint *d_Data, int dataN) {
 }
 */
 
-void opt_2dhisto(uint32_t *input, size_t height, size_t width, int* bins)
+void opt_2dhisto_simple(uint32_t *input, size_t height, size_t width, int* bins, uint8_t* result)
 {
     /* This function should only contain a call to the GPU 
        histogramming kernel. Any memory allocations and
@@ -49,8 +58,10 @@ void opt_2dhisto(uint32_t *input, size_t height, size_t width, int* bins)
 	
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
-	simple_histogram<<<ARRAY_SIZE/64, 64>>>(bins, input, height * width);
+	simple_histogram<<<ARRAY_SIZE/128, 128>>>(bins, input, height * width);
 	cudaThreadSynchronize();
+
+	clampToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(bins, result);	
 }
 
 /* Include below the implementation of any other functions you need */
