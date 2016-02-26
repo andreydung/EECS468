@@ -91,10 +91,9 @@ int main(int argc, char* argv[])
 	// from alloc_2d code padding, 
 	// use padded width when access input data from pointer
 	const int ARRAY_BYTES = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80) * sizeof(uint32_t);
-	const int BIN_BYTES = HISTO_HEIGHT * HISTO_WIDTH * sizeof(int);
 
 	uint32_t* in_gpu = (uint32_t*) AllocateDevice(ARRAY_BYTES);
-	int* bin_gpu = (int*) AllocateDevice(BIN_BYTES);
+	uint32_t* bin_gpu = (uint32_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
 	uint8_t* result_gpu = (uint8_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));	
 	CopyToDevice(in_gpu, *input, ARRAY_BYTES);
 	
@@ -107,12 +106,14 @@ int main(int argc, char* argv[])
             opt_2dhisto_simple(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu, result_gpu );)
 
     /* Include your teardown code below (temporary variables, function calls, etc.) */
-	CopyFromDevice(result_gpu, kernel_bins, BIN_BYTES);
+	CopyFromDevice(result_gpu, kernel_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
+	FreeDevice(result_gpu);
 
     /* End of teardown code */
     int passed=1;
     for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++){
         if (gold_bins[i] != kernel_bins[i]){
+			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
             passed = 0;
             break;
         }
