@@ -33,7 +33,7 @@ void opt_2dhisto_simple_1(uint32_t *input, size_t height, size_t width, uint32_t
 	
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
-	simple_histogram<<<ARRAY_SIZE/128, 128>>>(result32, input, height * width);
+	simple_histogram<<<ARRAY_SIZE/1024, 1024>>>(result32, input, height * width);
 	cudaThreadSynchronize();
 
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
@@ -69,7 +69,7 @@ void opt_2dhisto_shared_2(uint32_t* input, size_t height, size_t width, uint32_t
 
 	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
 
-	histogram<<<ARRAY_SIZE/128, 128 >>>(result32, input);
+	histogram<<<ARRAY_SIZE/1024, 1024 >>>(result32, input);
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
 //==========================================================================================
