@@ -64,6 +64,9 @@ __global__ void histogram(uint32_t* result, uint32_t *data) {
 
 void opt_2dhisto_fromslide(uint32_t* input, size_t height, size_t width, uint32_t* result32, uint8_t* result) {
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
+
+	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
+
 	histogram<<<ARRAY_SIZE/1024, 1024 >>>(result32, input);
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
