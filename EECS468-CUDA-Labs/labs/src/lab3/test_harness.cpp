@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     uint32_t **input = generate_histogram_bins();
 
     TIME_IT("ref_2dhisto",
-            1000,
+            1,
             ref_2dhisto(input, INPUT_HEIGHT, INPUT_WIDTH, gold_bins);)
 		
     /* Include your setup code below (temp variables, function calls, etc.) */	
@@ -102,8 +102,9 @@ int main(int argc, char* argv[])
     /* This is the call you will use to time your parallel implementation */
     
 	TIME_IT("opt_2dhisto",
-            1000,
-            opt_2dhisto_simple(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu, result_gpu );)
+            1,
+            opt_2dhisto_fromslide(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu, result_gpu );)
+
 
     /* Include your teardown code below (temporary variables, function calls, etc.) */
 	CopyFromDevice(result_gpu, kernel_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
@@ -115,7 +116,7 @@ int main(int argc, char* argv[])
         if (gold_bins[i] != kernel_bins[i]){
 			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
             passed = 0;
-            break;
+//            break;
         }
     }
     (passed) ? printf("\n    Test PASSED\n") : printf("\n    Test FAILED\n");

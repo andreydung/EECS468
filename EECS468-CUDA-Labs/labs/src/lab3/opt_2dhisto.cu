@@ -39,13 +39,13 @@ void opt_2dhisto_simple(uint32_t *input, size_t height, size_t width, uint32_t* 
 
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(bins, result);	
 }
-/*
+
 // Use shared memory
-__global__ void histogram(uint* result, uint32_t *data) {
+__global__ void histogram(uint32_t* result, uint32_t *data) {
 	const int globalTid = blockIdx.x * blockDim.x + threadIdx.x;
 	const int numThreads = blockDim.x * gridDim.x;
 	
-	__shared__ uint s_Hist[BIN_COUNT];
+	__shared__ unsigned int s_Hist[BIN_COUNT];
 	for(int pos = threadIdx.x; pos < BIN_COUNT; pos += blockDim.x)
 		s_Hist[pos] = 0;
 	__syncthreads();
@@ -53,19 +53,19 @@ __global__ void histogram(uint* result, uint32_t *data) {
 	for(int pos = globalTid; pos < INPUT_HEIGHT * INPUT_WIDTH_PADDED; pos += numThreads) {
 		if (pos % INPUT_WIDTH_PADDED < INPUT_WIDTH) {
 			uint32_t item = data[pos];
-			atomicAdd(s_Hist[item], 1);
+			atomicAdd(s_Hist + item, 1);
 		}	
 	}
 	__syncthreads();
 	
 	for(int pos = threadIdx.x; pos < BIN_COUNT; pos += blockDim.x)
-		atomicAdd(result[pos], s_Hist[pos]);
+		atomicAdd(result + pos, s_Hist[pos]);
 }
 
-
-void opt_2dhisto_fromslide(uint32_t* input, size_t height, size_t width, uint8_t* result) {
-	
-	histogram<<< >>>(result, input, height * width);
+void opt_2dhisto_fromslide(uint32_t* input, size_t height, size_t width, uint32_t* result32, uint8_t* result) {
+	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
+	histogram<<<ARRAY_SIZE/1024, 1024 >>>(result32, input);
+	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
 
 
