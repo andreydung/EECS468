@@ -6,10 +6,16 @@
 #include "util.h"
 #include "ref_2dhisto.h"
 
-
 __device__ const int INPUT_WIDTH_PADDED = (INPUT_WIDTH + 128) & 0xFFFFFF80;
 
-// Simple approach
+__global__ void convertToChar(uint32_t *bin, uint8_t* out) {
+	if (bin[threadIdx.x] > 255)
+		out[threadIdx.x] = 255;
+	else
+		out[threadIdx.x] = bin[threadIdx.x];
+}
+//==========================================================================================
+// Simple approach, no shared memory
 __global__ void simple_histogram(uint32_t *bin, uint32_t *data, const int dataN) {
 	int pos = threadIdx.x + blockDim.x * blockIdx.x;
 	if (pos % INPUT_WIDTH_PADDED < INPUT_WIDTH) {
@@ -18,28 +24,24 @@ __global__ void simple_histogram(uint32_t *bin, uint32_t *data, const int dataN)
 	}
 }
 
-__global__ void convertToChar(uint32_t *bin, uint8_t* out) {
-	if (bin[threadIdx.x] > 255)
-		out[threadIdx.x] = 255;
-	else
-		out[threadIdx.x] = bin[threadIdx.x];
-}
-
-void opt_2dhisto_simple(uint32_t *input, size_t height, size_t width, uint32_t* bins, uint8_t* result)
+void opt_2dhisto_simple_1(uint32_t *input, size_t height, size_t width, uint32_t* result32, uint8_t* result)
 {
     /* This function should only contain a call to the GPU 
        histogramming kernel. Any memory allocations and
        transfers must be done outside this function */
-	cudaMemset(bins, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
+	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
 	
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
-	simple_histogram<<<ARRAY_SIZE/128, 128>>>(bins, input, height * width);
+	simple_histogram<<<ARRAY_SIZE/128, 128>>>(result32, input, height * width);
 	cudaThreadSynchronize();
 
-	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(bins, result);	
+	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
+//==========================================================================================
 
+
+//==========================================================================================
 // Use shared memory
 __global__ void histogram(uint32_t* result, uint32_t *data) {
 	const int globalTid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -62,14 +64,15 @@ __global__ void histogram(uint32_t* result, uint32_t *data) {
 		atomicAdd(result + pos, s_Hist[pos]);
 }
 
-void opt_2dhisto_fromslide(uint32_t* input, size_t height, size_t width, uint32_t* result32, uint8_t* result) {
+void opt_2dhisto_shared_2(uint32_t* input, size_t height, size_t width, uint32_t* result32, uint8_t* result) {
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
 	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
 
-	histogram<<<ARRAY_SIZE/1024, 1024 >>>(result32, input);
+	histogram<<<ARRAY_SIZE/128, 128 >>>(result32, input);
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
+//==========================================================================================
 
 
 /* Include below the implementation of any other functions you need */

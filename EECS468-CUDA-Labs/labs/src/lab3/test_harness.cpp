@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     uint32_t **input = generate_histogram_bins();
 
     TIME_IT("ref_2dhisto",
-            1,
+            1000,
             ref_2dhisto(input, INPUT_HEIGHT, INPUT_WIDTH, gold_bins);)
 		
     /* Include your setup code below (temp variables, function calls, etc.) */	
@@ -93,34 +93,49 @@ int main(int argc, char* argv[])
 	const int ARRAY_BYTES = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80) * sizeof(uint32_t);
 
 	uint32_t* in_gpu = (uint32_t*) AllocateDevice(ARRAY_BYTES);
-	uint32_t* bin_gpu = (uint32_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
-	uint8_t* result_gpu = (uint8_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));	
+	uint32_t* bin32_gpu = (uint32_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
+	uint8_t*  bin_gpu = (uint8_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));	
 	CopyToDevice(in_gpu, *input, ARRAY_BYTES);
 	
     /* End of setup code */
 
     /* This is the call you will use to time your parallel implementation */
     
-	TIME_IT("opt_2dhisto",
-            1,
-            opt_2dhisto_fromslide(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin_gpu, result_gpu );)
 
+	// First approach
+	TIME_IT("opt_2d_simple",
+            1000,
+            opt_2dhisto_simple_1(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin32_gpu, bin_gpu );)
+	CopyFromDevice(bin_gpu, kernel_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
 
-    /* Include your teardown code below (temporary variables, function calls, etc.) */
-	CopyFromDevice(result_gpu, kernel_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
-	FreeDevice(result_gpu);
+    int passed=1; // common check for all tests
+    
+	for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++){
+        if (gold_bins[i] != kernel_bins[i]){
+			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
+            passed = 0;
+            break;
+        }
+    }
 
-    /* End of teardown code */
-    int passed=1;
+	// Second approach
+	TIME_IT("opt_2d_shared",
+            1000,
+            opt_2dhisto_shared_2(in_gpu, INPUT_HEIGHT, INPUT_WIDTH, bin32_gpu, bin_gpu );)
+	CopyFromDevice(bin_gpu, kernel_bins, HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));
+
     for (int i=0; i < HISTO_HEIGHT*HISTO_WIDTH; i++){
         if (gold_bins[i] != kernel_bins[i]){
 			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
             passed = 0;
-//            break;
+            break;
         }
     }
-    (passed) ? printf("\n    Test PASSED\n") : printf("\n    Test FAILED\n");
 
+    (passed) ? printf("\n    Test PASSED\n") : printf("\n    Test FAILED\n");
+	
+	FreeDevice(bin_gpu);
+	FreeDevice(bin32_gpu);
     free(gold_bins);
     free(kernel_bins);
 }
