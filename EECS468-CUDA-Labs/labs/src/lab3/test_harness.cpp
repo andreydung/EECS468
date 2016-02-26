@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 	// use padded width when access input data from pointer
 	const int ARRAY_BYTES = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80) * sizeof(uint32_t);
 
-	uint32_t* in_gpu = (uint32_t*) AllocateDevice(ARRAY_BYTES);
+	uint32_t* in_gpu = (uint32_t*) AllocateDevice(ARRAY_BYTES);	
 	uint32_t* bin32_gpu = (uint32_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint32_t));
 	uint8_t*  bin_gpu = (uint8_t*) AllocateDevice(HISTO_HEIGHT * HISTO_WIDTH * sizeof(uint8_t));	
 	CopyToDevice(in_gpu, *input, ARRAY_BYTES);
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
         if (gold_bins[i] != kernel_bins[i]){
 			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
             passed = 0;
-            break;
+    //        break;
         }
     }
 
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
         if (gold_bins[i] != kernel_bins[i]){
 			printf("correct: %d result: %d \n", gold_bins[i], kernel_bins[i]);
             passed = 0;
-            break;
+     //       break;
         }
     }
 

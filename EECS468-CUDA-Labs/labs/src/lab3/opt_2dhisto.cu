@@ -18,7 +18,7 @@ __global__ void convertToChar(uint32_t *bin, uint8_t* out) {
 // Simple approach, no shared memory
 __global__ void simple_histogram(uint32_t *bin, uint32_t *data, const int dataN) {
 	int pos = threadIdx.x + blockDim.x * blockIdx.x;
-	if (pos % INPUT_WIDTH_PADDED < INPUT_WIDTH) {
+	if ((pos % INPUT_WIDTH_PADDED) < INPUT_WIDTH) {
 		uint32_t item = data[pos];
 		atomicAdd(&(bin[item]), 1);
 	}
@@ -29,7 +29,7 @@ void opt_2dhisto_simple_1(uint32_t *input, size_t height, size_t width, uint32_t
     /* This function should only contain a call to the GPU 
        histogramming kernel. Any memory allocations and
        transfers must be done outside this function */
-	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
+	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(uint32_t));
 	
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
@@ -39,6 +39,7 @@ void opt_2dhisto_simple_1(uint32_t *input, size_t height, size_t width, uint32_t
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
 }
 //==========================================================================================
+
 
 
 //==========================================================================================
@@ -53,7 +54,7 @@ __global__ void histogram(uint32_t* result, uint32_t *data) {
 	__syncthreads();
 
 	for(int pos = globalTid; pos < INPUT_HEIGHT * INPUT_WIDTH_PADDED; pos += numThreads) {
-		if (pos % INPUT_WIDTH_PADDED < INPUT_WIDTH) {
+		if ((pos % INPUT_WIDTH_PADDED) < INPUT_WIDTH) {
 			uint32_t item = data[pos];
 			atomicAdd(s_Hist + item, 1);
 		}	
@@ -67,10 +68,13 @@ __global__ void histogram(uint32_t* result, uint32_t *data) {
 void opt_2dhisto_shared_2(uint32_t* input, size_t height, size_t width, uint32_t* result32, uint8_t* result) {
 	const int ARRAY_SIZE = INPUT_HEIGHT * ((INPUT_WIDTH + 128) & 0xFFFFFF80);	
 
-	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(int));
+	cudaMemset(result32, 0, HISTO_HEIGHT*HISTO_WIDTH*sizeof(uint32_t));
 
 	histogram<<<ARRAY_SIZE/1024, 1024 >>>(result32, input);
+	cudaThreadSynchronize();
+
 	convertToChar<<<1, HISTO_HEIGHT * HISTO_WIDTH>>>(result32, result);	
+	
 }
 //==========================================================================================
 
