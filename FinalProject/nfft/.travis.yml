@@ -1,0 +1,24 @@
+language: c
+compiler: gcc
+os: linux
+
+# Turn off sudo to run on container based infrastructure
+sudo: false
+
+## turn off email notifications
+# notifications:
+#   email: false
+
+addons:
+  apt:
+    packages:
+    - libfftw3-dev
+    - libcunit1-dev
+
+# install:
+
+script: ./bootstrap.sh && ./configure --enable-all --enable-openmp && make && make check
+
+## print config.log for debugging
+after_failure: "cat config.log"
+
