@@ -575,7 +575,6 @@ AC_CONFIG_FILES(Makefile \
 		            examples/solver/glacier.c \
 		            examples/solver/simple_test.c \
                 cuda/Makefile \
-                cuda/test_cuda \
                 applications/Makefile \
                 applications/fastgauss/Makefile \
 		applications/fastgauss/fastgauss.c \
