@@ -235,29 +235,33 @@ AC_MSG_RESULT([$window])
 # compiler characteristis
 ################################################################################
 
-# select programming language
-AC_LANG(C)
+# # select programming language
+# AC_LANG(C)
 
-# compiler vendor
-AX_COMPILER_VENDOR
+# # compiler vendor
+# AX_COMPILER_VENDOR
 
-# check for C99 compliant mode (possibly with GNU extensions)
-AC_PROG_CC_C99
+# # check for C99 compliant mode (possibly with GNU extensions)
+# AC_PROG_CC_C99
 
-# per-target flags
-AM_PROG_CC_C_O
+# # per-target flags
+# AM_PROG_CC_C_O
 
-# enable "const" keyword
-AC_C_CONST
+# # enable "const" keyword
+# AC_C_CONST
 
-# enable "restrict" keyword
-AC_C_RESTRICT
+# # enable "restrict" keyword
+# AC_C_RESTRICT
 
-# enable "inline" keyword
-AC_C_INLINE
+# # enable "inline" keyword
+# AC_C_INLINE
 
-# reset CC variable (the C99 option is added back below)
-CC="$ac_save_CC"
+# # reset CC variable (the C99 option is added back below)
+# CC="$ac_save_CC"
+
+# set nvcc in configure.ac
+AC_PROG_CC([nvcc])
+AC_PROG_CXX([nvcc])
 
 ################################################################################
 # program checks
@@ -572,12 +576,12 @@ AC_CONFIG_FILES(Makefile \
                 examples/nnfft/Makefile \
                 examples/nsfft/Makefile \
                 examples/solver/Makefile \
-		            examples/solver/glacier.c \
-		            examples/solver/simple_test.c \
+                examples/solver/glacier.c \
+                examples/solver/simple_test.c \
                 cuda/Makefile \
                 applications/Makefile \
                 applications/fastgauss/Makefile \
-		applications/fastgauss/fastgauss.c \
+    applications/fastgauss/fastgauss.c \
                 applications/fastsum/Makefile \
                 applications/fastsumS2/Makefile \
                 applications/quadratureS2/Makefile \
@@ -589,8 +593,8 @@ AC_CONFIG_FILES(Makefile \
                 applications/polarFFT/mpolar_fft_test.c \
                 applications/polarFFT/polar_fft_test.c \
                 applications/radon/Makefile \
-		applications/radon/inverse_radon.c \
-		applications/radon/radon.c \
+    applications/radon/inverse_radon.c \
+    applications/radon/radon.c \
                 applications/iterS2/Makefile \
                 matlab/Makefile \
                 matlab/nfsft/Makefile \
