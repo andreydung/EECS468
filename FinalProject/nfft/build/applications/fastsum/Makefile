@@ -145,7 +145,7 @@ fastsum_benchomp_OBJECTS = $(am_fastsum_benchomp_OBJECTS)
 #fastsum_benchomp_DEPENDENCIES =  \
 #	libfastsum_threads.la \
 #	libkernels.la \
-#	$(top_builddir)/libnfft3_threads.la
+#	$(top_builddir)/libnfft3f_threads.la
 fastsum_benchomp_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(fastsum_benchomp_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
@@ -158,7 +158,7 @@ fastsum_benchomp_createdataset_OBJECTS =  \
 #fastsum_benchomp_createdataset_DEPENDENCIES =  \
 #	libfastsum.la \
 #	libkernels.la \
-#	$(top_builddir)/libnfft3.la
+#	$(top_builddir)/libnfft3f.la
 am__fastsum_benchomp_detail_single_SOURCES_DIST =  \
 	fastsum_benchomp_detail.c
 #am_fastsum_benchomp_detail_single_OBJECTS = fastsum_benchomp_detail.$(OBJEXT)
@@ -167,7 +167,7 @@ fastsum_benchomp_detail_single_OBJECTS =  \
 #fastsum_benchomp_detail_single_DEPENDENCIES =  \
 #	libfastsum.la \
 #	libkernels.la \
-#	$(top_builddir)/libnfft3.la
+#	$(top_builddir)/libnfft3f.la
 am__fastsum_benchomp_detail_threads_SOURCES_DIST =  \
 	fastsum_benchomp_detail.c
 #am_fastsum_benchomp_detail_threads_OBJECTS = fastsum_benchomp_detail_threads-fastsum_benchomp_detail.$(OBJEXT)
@@ -176,7 +176,7 @@ fastsum_benchomp_detail_threads_OBJECTS =  \
 #fastsum_benchomp_detail_threads_DEPENDENCIES =  \
 #	libfastsum_threads.la \
 #	libkernels.la \
-#	$(top_builddir)/libnfft3_threads.la
+#	$(top_builddir)/libnfft3f_threads.la
 fastsum_benchomp_detail_threads_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(fastsum_benchomp_detail_threads_CFLAGS) $(CFLAGS) \
@@ -184,17 +184,17 @@ fastsum_benchomp_detail_threads_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 am_fastsum_matlab_OBJECTS = fastsum_matlab.$(OBJEXT)
 fastsum_matlab_OBJECTS = $(am_fastsum_matlab_OBJECTS)
 fastsum_matlab_DEPENDENCIES = libfastsum.la libkernels.la \
-	$(top_builddir)/libnfft3.la
+	$(top_builddir)/libnfft3f.la
 am_fastsum_test_OBJECTS = fastsum_test.$(OBJEXT)
 fastsum_test_OBJECTS = $(am_fastsum_test_OBJECTS)
 fastsum_test_DEPENDENCIES = libfastsum.la libkernels.la \
-	$(top_builddir)/libnfft3.la
+	$(top_builddir)/libnfft3f.la
 am__fastsum_test_threads_SOURCES_DIST = fastsum_test.c
 #am_fastsum_test_threads_OBJECTS = fastsum_test_threads-fastsum_test.$(OBJEXT)
 fastsum_test_threads_OBJECTS = $(am_fastsum_test_threads_OBJECTS)
 #fastsum_test_threads_DEPENDENCIES =  \
 #	libfastsum_threads.la libkernels.la \
-#	$(top_builddir)/libnfft3_threads.la
+#	$(top_builddir)/libnfft3f_threads.la
 fastsum_test_threads_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(fastsum_test_threads_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -358,7 +358,7 @@ MAINT = #
 MAKEINFO = ${SHELL} /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/config/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
-NFFT_PRECISION_MACRO = NFFT_PRECISION_DOUBLE
+NFFT_PRECISION_MACRO = NFFT_PRECISION_SINGLE
 NM = /usr/bin/nm -B
 NMEDIT = 
 OBJDUMP = objdump
@@ -375,8 +375,8 @@ PACKAGE_URL =
 PACKAGE_VERSION = 3.3.1-alpha
 PATH_SEPARATOR = :
 POW_LIB = 
-PRECISION = d
-PREC_SUFFIX = 
+PRECISION = s
+PREC_SUFFIX = f
 PRTDIAG = 
 RANLIB = ranlib
 SED = /usr/bin/sed
@@ -384,7 +384,7 @@ SET_MAKE =
 SHARED_VERSION_INFO = 2:0:0
 SHELL = /bin/sh
 STRIP = strip
-TICKS_PER_SECOND = 2712187264.0
+TICKS_PER_SECOND = 2712186283.0
 VERSION = 3.3.1-alpha
 abs_builddir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/applications/fastsum
 abs_srcdir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/../applications/fastsum
@@ -413,7 +413,7 @@ docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 fftw3_LDFLAGS = 
-fftw3_LIBS = -lfftw3 -lm
+fftw3_LIBS = -lfftw3f -lm
 fftw3_threads_LIBS = 
 host = x86_64-suse-linux-gnu
 host_alias = 
@@ -460,7 +460,7 @@ LIBFASTSUM_THREADS =
 FASTSUM_BENCHOMP_PROGS = 
 noinst_LTLIBRARIES = libfastsum.la libkernels.la $(LIBFASTSUM_THREADS)
 libfastsum_la_SOURCES = fastsum.c fastsum.h kernels.h
-libfastsum_la_LIBADD = -lfftw3 -lm
+libfastsum_la_LIBADD = -lfftw3f -lm
 libfastsum_la_LDFLAGS = 
 libkernels_la_SOURCES = kernels.c
 #libfastsum_threads_la_SOURCES = fastsum.c fastsum.h kernels.h
@@ -468,21 +468,21 @@ libkernels_la_SOURCES = kernels.c
 #libfastsum_threads_la_LDFLAGS = @fftw3_threads_LDFLAGS@
 #libfastsum_threads_la_CFLAGS = $(OPENMP_CFLAGS)
 fastsum_test_SOURCES = fastsum_test.c
-fastsum_test_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3.la
+fastsum_test_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3f.la
 fastsum_matlab_SOURCES = fastsum_matlab.c
-fastsum_matlab_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3.la
+fastsum_matlab_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3f.la
 #fastsum_test_threads_SOURCES = fastsum_test.c
-#fastsum_test_threads_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3_threads.la
+#fastsum_test_threads_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3f_threads.la
 #fastsum_test_threads_CFLAGS = $(OPENMP_CFLAGS)
 #fastsum_benchomp_SOURCES = fastsum_benchomp.c
-#fastsum_benchomp_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3_threads.la  
+#fastsum_benchomp_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3f_threads.la  
 #fastsum_benchomp_CFLAGS = $(OPENMP_CFLAGS)
 #fastsum_benchomp_createdataset_SOURCES = fastsum_benchomp_createdataset.c
-#fastsum_benchomp_createdataset_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3.la  -lfftw3 -lm
+#fastsum_benchomp_createdataset_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3f.la  -lfftw3f -lm
 #fastsum_benchomp_detail_single_SOURCES = fastsum_benchomp_detail.c
-#fastsum_benchomp_detail_single_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3.la  -lfftw3 -lm
+#fastsum_benchomp_detail_single_LDADD = libfastsum.la libkernels.la $(top_builddir)/libnfft3f.la  -lfftw3f -lm
 #fastsum_benchomp_detail_threads_SOURCES = fastsum_benchomp_detail.c
-#fastsum_benchomp_detail_threads_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3_threads.la  
+#fastsum_benchomp_detail_threads_LDADD = libfastsum_threads.la libkernels.la $(top_builddir)/libnfft3f_threads.la  
 #fastsum_benchomp_detail_threads_CFLAGS = $(OPENMP_CFLAGS)
 EXTRA_DIST = fastsum.m fastsum_test.m README
 all: all-am

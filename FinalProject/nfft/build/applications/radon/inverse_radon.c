@@ -43,7 +43,7 @@
 #include <string.h>
 #include <complex.h>
 
-#define NFFT_PRECISION_DOUBLE
+#define NFFT_PRECISION_SINGLE
 
 #include "nfft3mp.h"
 

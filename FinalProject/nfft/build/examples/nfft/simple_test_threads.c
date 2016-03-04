@@ -25,7 +25,7 @@
 
 #include <sys/time.h>
 
-#define NFFT_PRECISION_DOUBLE
+#define NFFT_PRECISION_SINGLE
 
 #include "nfft3mp.h"
 

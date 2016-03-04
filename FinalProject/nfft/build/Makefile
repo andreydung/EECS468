@@ -144,42 +144,42 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
-libnfft3_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
+libnfft3f_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
 	kernel/libkernel.la
-am_libnfft3_la_OBJECTS =
-libnfft3_la_OBJECTS =  \
-	$(am_libnfft3_la_OBJECTS)
+am_libnfft3f_la_OBJECTS =
+libnfft3f_la_OBJECTS =  \
+	$(am_libnfft3f_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libnfft3_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+libnfft3f_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(libnfft3_la_LDFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS) $(libnfft3f_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-#libnfft3_matlab_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
+#libnfft3f_matlab_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
 #	kernel/libkernel.la
-##libnfft3_matlab_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
+##libnfft3f_matlab_la_DEPENDENCIES = 3rdparty/lib3rdparty.la \
 ##	kernel/libkernel_threads.la
-am_libnfft3_matlab_la_OBJECTS =
-libnfft3_matlab_la_OBJECTS =  \
-	$(am_libnfft3_matlab_la_OBJECTS)
-libnfft3_matlab_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+am_libnfft3f_matlab_la_OBJECTS =
+libnfft3f_matlab_la_OBJECTS =  \
+	$(am_libnfft3f_matlab_la_OBJECTS)
+libnfft3f_matlab_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(AM_CFLAGS) $(CFLAGS) \
-	$(libnfft3_matlab_la_LDFLAGS) $(LDFLAGS) -o $@
-#am_libnfft3_matlab_la_rpath =
-#libnfft3_threads_la_DEPENDENCIES =  \
+	$(libnfft3f_matlab_la_LDFLAGS) $(LDFLAGS) -o $@
+#am_libnfft3f_matlab_la_rpath =
+#libnfft3f_threads_la_DEPENDENCIES =  \
 #	3rdparty/lib3rdparty.la \
 #	kernel/libkernel_threads.la
-am_libnfft3_threads_la_OBJECTS =
-libnfft3_threads_la_OBJECTS =  \
-	$(am_libnfft3_threads_la_OBJECTS)
-libnfft3_threads_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+am_libnfft3f_threads_la_OBJECTS =
+libnfft3f_threads_la_OBJECTS =  \
+	$(am_libnfft3f_threads_la_OBJECTS)
+libnfft3f_threads_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(libnfft3_threads_la_CFLAGS) $(CFLAGS) \
-	$(libnfft3_threads_la_LDFLAGS) $(LDFLAGS) -o $@
-#am_libnfft3_threads_la_rpath = -rpath \
+	$(libnfft3f_threads_la_CFLAGS) $(CFLAGS) \
+	$(libnfft3f_threads_la_LDFLAGS) $(LDFLAGS) -o $@
+#am_libnfft3f_threads_la_rpath = -rpath \
 #	$(libdir)
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
@@ -212,12 +212,12 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libnfft3_la_SOURCES) \
-	$(libnfft3_matlab_la_SOURCES) \
-	$(libnfft3_threads_la_SOURCES)
-DIST_SOURCES = $(libnfft3_la_SOURCES) \
-	$(libnfft3_matlab_la_SOURCES) \
-	$(libnfft3_threads_la_SOURCES)
+SOURCES = $(libnfft3f_la_SOURCES) \
+	$(libnfft3f_matlab_la_SOURCES) \
+	$(libnfft3f_threads_la_SOURCES)
+DIST_SOURCES = $(libnfft3f_la_SOURCES) \
+	$(libnfft3f_matlab_la_SOURCES) \
+	$(libnfft3f_threads_la_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -389,7 +389,7 @@ MAINT = #
 MAKEINFO = ${SHELL} /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/config/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
-NFFT_PRECISION_MACRO = NFFT_PRECISION_DOUBLE
+NFFT_PRECISION_MACRO = NFFT_PRECISION_SINGLE
 NM = /usr/bin/nm -B
 NMEDIT = 
 OBJDUMP = objdump
@@ -406,8 +406,8 @@ PACKAGE_URL =
 PACKAGE_VERSION = 3.3.1-alpha
 PATH_SEPARATOR = :
 POW_LIB = 
-PRECISION = d
-PREC_SUFFIX = 
+PRECISION = s
+PREC_SUFFIX = f
 PRTDIAG = 
 RANLIB = ranlib
 SED = /usr/bin/sed
@@ -415,7 +415,7 @@ SET_MAKE =
 SHARED_VERSION_INFO = 2:0:0
 SHELL = /bin/sh
 STRIP = strip
-TICKS_PER_SECOND = 2712187264.0
+TICKS_PER_SECOND = 2712186283.0
 VERSION = 3.3.1-alpha
 abs_builddir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build
 abs_srcdir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/..
@@ -444,7 +444,7 @@ docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 fftw3_LDFLAGS = 
-fftw3_LIBS = -lfftw3 -lm
+fftw3_LIBS = -lfftw3f -lm
 fftw3_threads_LIBS = 
 host = x86_64-suse-linux-gnu
 host_alias = 
@@ -491,26 +491,26 @@ APPLICATION_DIRS = applications
 MATLAB_DIRS = 
 #MATLAB_DIRS = matlab
 LIBNFFT3_MATLAB_LA = 
-#LIBNFFT3_MATLAB_LA = libnfft3_matlab.la
+#LIBNFFT3_MATLAB_LA = libnfft3f_matlab.la
 LIBNFFT3_THREADS_LA = 
-#LIBNFFT3_THREADS_LA = libnfft3_threads.la
+#LIBNFFT3_THREADS_LA = libnfft3f_threads.la
 SUBDIRS = 3rdparty include kernel . tests $(EXAMPLE_DIRS) $(APPLICATION_DIRS) $(MATLAB_DIRS)
-lib_LTLIBRARIES = libnfft3.la $(LIBNFFT3_THREADS_LA)
+lib_LTLIBRARIES = libnfft3f.la $(LIBNFFT3_THREADS_LA)
 noinst_LTLIBRARIES = $(LIBNFFT3_MATLAB_LA)
-libnfft3_la_SOURCES = 
-libnfft3_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel.la -lfftw3 -lm -lm
-libnfft3_la_LDFLAGS = -no-undefined -version-info 2:0:0 
-#libnfft3_threads_la_SOURCES = 
-#libnfft3_threads_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel_threads.la  -lm
-#libnfft3_threads_la_LDFLAGS = -no-undefined -version-info 2:0:0 
-#libnfft3_threads_la_CFLAGS = $(OPENMP_CFLAGS)
-#libnfft3_matlab_la_SOURCES = 
-#libnfft3_matlab_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel.la  -lm
-##libnfft3_matlab_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel_threads.la  -lm
-#libnfft3_matlab_la_LDFLAGS = 
+libnfft3f_la_SOURCES = 
+libnfft3f_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel.la -lfftw3f -lm -lm
+libnfft3f_la_LDFLAGS = -no-undefined -version-info 2:0:0 
+#libnfft3f_threads_la_SOURCES = 
+#libnfft3f_threads_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel_threads.la  -lm
+#libnfft3f_threads_la_LDFLAGS = -no-undefined -version-info 2:0:0 
+#libnfft3f_threads_la_CFLAGS = $(OPENMP_CFLAGS)
+#libnfft3f_matlab_la_SOURCES = 
+#libnfft3f_matlab_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel.la  -lm
+##libnfft3f_matlab_la_LIBADD = 3rdparty/lib3rdparty.la kernel/libkernel_threads.la  -lm
+#libnfft3f_matlab_la_LDFLAGS = 
 EXTRA_DIST = bootstrap.sh doxygen.dox nfft3.pc.in doc
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = nfft3.pc
+pkgconfig_DATA = nfft3f.pc
 ##DX_CLEAN_HTML = doc/html
 ##DX_CLEAN_CHM = doc/chm
 ###DX_CLEAN_CHI = doc/nfft.chi
@@ -626,14 +626,14 @@ clean-noinstLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libnfft3.la: $(libnfft3_la_OBJECTS) $(libnfft3_la_DEPENDENCIES) $(EXTRA_libnfft3_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libnfft3_la_LINK) -rpath $(libdir) $(libnfft3_la_OBJECTS) $(libnfft3_la_LIBADD) $(LIBS)
+libnfft3f.la: $(libnfft3f_la_OBJECTS) $(libnfft3f_la_DEPENDENCIES) $(EXTRA_libnfft3f_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libnfft3f_la_LINK) -rpath $(libdir) $(libnfft3f_la_OBJECTS) $(libnfft3f_la_LIBADD) $(LIBS)
 
-libnfft3_matlab.la: $(libnfft3_matlab_la_OBJECTS) $(libnfft3_matlab_la_DEPENDENCIES) $(EXTRA_libnfft3_matlab_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libnfft3_matlab_la_LINK) $(am_libnfft3_matlab_la_rpath) $(libnfft3_matlab_la_OBJECTS) $(libnfft3_matlab_la_LIBADD) $(LIBS)
+libnfft3f_matlab.la: $(libnfft3f_matlab_la_OBJECTS) $(libnfft3f_matlab_la_DEPENDENCIES) $(EXTRA_libnfft3f_matlab_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libnfft3f_matlab_la_LINK) $(am_libnfft3f_matlab_la_rpath) $(libnfft3f_matlab_la_OBJECTS) $(libnfft3f_matlab_la_LIBADD) $(LIBS)
 
-libnfft3_threads.la: $(libnfft3_threads_la_OBJECTS) $(libnfft3_threads_la_DEPENDENCIES) $(EXTRA_libnfft3_threads_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libnfft3_threads_la_LINK) $(am_libnfft3_threads_la_rpath) $(libnfft3_threads_la_OBJECTS) $(libnfft3_threads_la_LIBADD) $(LIBS)
+libnfft3f_threads.la: $(libnfft3f_threads_la_OBJECTS) $(libnfft3f_threads_la_DEPENDENCIES) $(EXTRA_libnfft3f_threads_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libnfft3f_threads_la_LINK) $(am_libnfft3f_threads_la_rpath) $(libnfft3f_threads_la_OBJECTS) $(libnfft3f_threads_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1101,8 +1101,8 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgconfigDATA
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 
-#nfft3.pc: nfft3.pc
-#	cp -f nfft3.pc nfft3.pc
+nfft3f.pc: nfft3.pc
+	cp -f nfft3.pc nfft3f.pc
 
 install-data-hook:
 	if test -f "$(abs_top_builddir)/doc/html/index.html"; then \

@@ -116,7 +116,7 @@ am_checkall_OBJECTS = check.$(OBJEXT) bspline.$(OBJEXT) \
 	bessel.$(OBJEXT) nfft.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2)
 checkall_OBJECTS = $(am_checkall_OBJECTS)
-checkall_DEPENDENCIES = $(top_builddir)/libnfft3.la
+checkall_DEPENDENCIES = $(top_builddir)/libnfft3f.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -133,7 +133,7 @@ am__objects_5 = checkall_threads-check.$(OBJEXT) \
 #am_checkall_threads_OBJECTS =  \
 #	$(am__objects_5)
 checkall_threads_OBJECTS = $(am_checkall_threads_OBJECTS)
-#checkall_threads_DEPENDENCIES = $(top_builddir)/libnfft3_threads.la
+#checkall_threads_DEPENDENCIES = $(top_builddir)/libnfft3f_threads.la
 checkall_threads_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(checkall_threads_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
@@ -530,7 +530,7 @@ MAINT = #
 MAKEINFO = ${SHELL} /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/config/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
-NFFT_PRECISION_MACRO = NFFT_PRECISION_DOUBLE
+NFFT_PRECISION_MACRO = NFFT_PRECISION_SINGLE
 NM = /usr/bin/nm -B
 NMEDIT = 
 OBJDUMP = objdump
@@ -547,8 +547,8 @@ PACKAGE_URL =
 PACKAGE_VERSION = 3.3.1-alpha
 PATH_SEPARATOR = :
 POW_LIB = 
-PRECISION = d
-PREC_SUFFIX = 
+PRECISION = s
+PREC_SUFFIX = f
 PRTDIAG = 
 RANLIB = ranlib
 SED = /usr/bin/sed
@@ -556,7 +556,7 @@ SET_MAKE =
 SHARED_VERSION_INFO = 2:0:0
 SHELL = /bin/sh
 STRIP = strip
-TICKS_PER_SECOND = 2712187264.0
+TICKS_PER_SECOND = 2712186283.0
 VERSION = 3.3.1-alpha
 abs_builddir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/tests
 abs_srcdir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/../tests
@@ -585,7 +585,7 @@ docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 fftw3_LDFLAGS = 
-fftw3_LIBS = -lfftw3 -lm
+fftw3_LIBS = -lfftw3f -lm
 fftw3_threads_LIBS = 
 host = x86_64-suse-linux-gnu
 host_alias = 
@@ -636,9 +636,9 @@ NFCT_SOURCES =
 NFST_SOURCES = 
 #NFST_SOURCES = nfst.c nfst.h
 checkall_SOURCES = check.c bspline.c bspline.h bessel.c bessel.h nfft.c nfft.h $(NFCT_SOURCES) $(NFST_SOURCES)
-checkall_LDADD = $(top_builddir)/libnfft3.la -lm -lcunit -lncurses
+checkall_LDADD = $(top_builddir)/libnfft3f.la -lm -lcunit -lncurses
 #checkall_threads_SOURCES = $(checkall_SOURCES)
-#checkall_threads_LDADD = $(top_builddir)/libnfft3_threads.la   -lcunit -lncurses
+#checkall_threads_LDADD = $(top_builddir)/libnfft3f_threads.la   -lcunit -lncurses
 #checkall_threads_CFLAGS = $(OPENMP_CFLAGS)
 all: all-recursive
 
@@ -1276,7 +1276,7 @@ uninstall-am:
 
 
 #debug_SOURCES = debug.c nfct.c nfst.c nfct.h nfst.h
-#debug_LDADD = $(top_builddir)/libnfft3.la -lcunit -lncurses
+#debug_LDADD = $(top_builddir)/libnfft3f.la -lcunit -lncurses
 
 clean-local:
 	rm -f CUnitAutomated-Results.xml CUnitAutomated_threads-Results.xml checkall.log checkall.trs checkall_threads.log checkall_threads.trs

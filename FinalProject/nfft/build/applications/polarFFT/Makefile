@@ -115,7 +115,7 @@ PROGRAMS = $(noinst_PROGRAMS)
 am_linogram_fft_test_OBJECTS = linogram_fft_test.$(OBJEXT)
 linogram_fft_test_OBJECTS = $(am_linogram_fft_test_OBJECTS)
 linogram_fft_test_DEPENDENCIES =  \
-	$(top_builddir)/libnfft3.la
+	$(top_builddir)/libnfft3f.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -123,11 +123,11 @@ am__v_lt_1 =
 am_mpolar_fft_test_OBJECTS = mpolar_fft_test.$(OBJEXT)
 mpolar_fft_test_OBJECTS = $(am_mpolar_fft_test_OBJECTS)
 mpolar_fft_test_DEPENDENCIES =  \
-	$(top_builddir)/libnfft3.la
+	$(top_builddir)/libnfft3f.la
 am_polar_fft_test_OBJECTS = polar_fft_test.$(OBJEXT)
 polar_fft_test_OBJECTS = $(am_polar_fft_test_OBJECTS)
 polar_fft_test_DEPENDENCIES =  \
-	$(top_builddir)/libnfft3.la
+	$(top_builddir)/libnfft3f.la
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -276,7 +276,7 @@ MAINT = #
 MAKEINFO = ${SHELL} /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/config/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
-NFFT_PRECISION_MACRO = NFFT_PRECISION_DOUBLE
+NFFT_PRECISION_MACRO = NFFT_PRECISION_SINGLE
 NM = /usr/bin/nm -B
 NMEDIT = 
 OBJDUMP = objdump
@@ -293,8 +293,8 @@ PACKAGE_URL =
 PACKAGE_VERSION = 3.3.1-alpha
 PATH_SEPARATOR = :
 POW_LIB = 
-PRECISION = d
-PREC_SUFFIX = 
+PRECISION = s
+PREC_SUFFIX = f
 PRTDIAG = 
 RANLIB = ranlib
 SED = /usr/bin/sed
@@ -302,7 +302,7 @@ SET_MAKE =
 SHARED_VERSION_INFO = 2:0:0
 SHELL = /bin/sh
 STRIP = strip
-TICKS_PER_SECOND = 2712187264.0
+TICKS_PER_SECOND = 2712186283.0
 VERSION = 3.3.1-alpha
 abs_builddir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/applications/polarFFT
 abs_srcdir = /home/jfixelle/Documents/EECS468/github/FinalProject/nfft/build/../applications/polarFFT
@@ -331,7 +331,7 @@ docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 fftw3_LDFLAGS = 
-fftw3_LIBS = -lfftw3 -lm
+fftw3_LIBS = -lfftw3f -lm
 fftw3_threads_LIBS = 
 host = x86_64-suse-linux-gnu
 host_alias = 
@@ -370,11 +370,11 @@ top_builddir = ../..
 top_srcdir = ../../..
 AM_CPPFLAGS = -I$(top_srcdir)/include
 polar_fft_test_SOURCES = polar_fft_test.c doxygen.h
-polar_fft_test_LDADD = $(top_builddir)/libnfft3.la -lm
+polar_fft_test_LDADD = $(top_builddir)/libnfft3f.la -lm
 mpolar_fft_test_SOURCES = mpolar_fft_test.c
-mpolar_fft_test_LDADD = $(top_builddir)/libnfft3.la  -lfftw3 -lm
+mpolar_fft_test_LDADD = $(top_builddir)/libnfft3f.la  -lfftw3f -lm
 linogram_fft_test_SOURCES = linogram_fft_test.c
-linogram_fft_test_LDADD = $(top_builddir)/libnfft3.la  -lfftw3 -lm
+linogram_fft_test_LDADD = $(top_builddir)/libnfft3f.la  -lfftw3f -lm
 EXTRA_DIST = phantom.m fft_test.m README
 all: all-am
 
