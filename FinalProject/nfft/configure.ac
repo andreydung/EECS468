@@ -235,33 +235,33 @@ AC_MSG_RESULT([$window])
 # compiler characteristis
 ################################################################################
 
-# # select programming language
-# AC_LANG(C)
+# select programming language
+AC_LANG(C)
 
-# # compiler vendor
-# AX_COMPILER_VENDOR
+# compiler vendor
+AX_COMPILER_VENDOR
 
-# # check for C99 compliant mode (possibly with GNU extensions)
-# AC_PROG_CC_C99
+# check for C99 compliant mode (possibly with GNU extensions)
+AC_PROG_CC_C99
 
-# # per-target flags
-# AM_PROG_CC_C_O
+# per-target flags
+AM_PROG_CC_C_O
 
-# # enable "const" keyword
-# AC_C_CONST
+# enable "const" keyword
+AC_C_CONST
 
-# # enable "restrict" keyword
-# AC_C_RESTRICT
+# enable "restrict" keyword
+AC_C_RESTRICT
 
-# # enable "inline" keyword
-# AC_C_INLINE
+# enable "inline" keyword
+AC_C_INLINE
 
-# # reset CC variable (the C99 option is added back below)
+# reset CC variable (the C99 option is added back below)
 # CC="$ac_save_CC"
 
 # set nvcc in configure.ac
-AC_PROG_CC([nvcc])
-AC_PROG_CXX([nvcc])
+# AC_PROG_CC([nvcc])
+AC_PROG_CXX([g++])
 
 ################################################################################
 # program checks
