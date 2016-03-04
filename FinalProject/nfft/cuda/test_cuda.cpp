@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define NFFT_PRECISION_SINGLE
+#define NFFT_PRECISION_DOUBLE
 
 
 #define USING_ADJOINT 0
