@@ -97,7 +97,7 @@ DX_INIT_DOXYGEN([NFFT], [doxygen/doxygen.Doxyfile], [doc])
 AM_MAINTAINER_MODE
 
 # Precision.
-AC_ARG_ENABLE(single, [AS_HELP_STRING([--enable-single],[compile NFFT in single precision])], ok=$enableval, ok=no)
+AC_ARG_ENABLE(single, [AS_HELP_STRING([--enable-single],[compile NFFT in single precision])], ok=$enableval, ok=yes)
 AC_ARG_ENABLE(float, [AS_HELP_STRING([--enable-float],[synonym for --enable-single])], ok=$enableval)
 if test "$ok" = "yes"; then
   AC_DEFINE(NFFT_SINGLE,1,[Define to compile in single precision.])
