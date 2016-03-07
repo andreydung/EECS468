@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define CUDA_SAFE_COMPLEX 1
 
 
 #define NFFT_PRECISION_SINGLE
@@ -69,6 +70,7 @@ __global__ void cudaNFTDirect1D(float* x, cuComplex* f, cuComplex* fhat, int N, 
 	// taking x,fhat -> f
 	// --------------------------------------------------------------
 	// memset(f, 0, (size_t)(ths->M_total) * sizeof(C));
+	// #pragma omp parallel for default(shared) private(j)
 	// for (j = 0; j < ths->M_total; j++)
 	// {
 	// 	INT k_L;
@@ -81,16 +83,55 @@ __global__ void cudaNFTDirect1D(float* x, cuComplex* f, cuComplex* fhat, int N, 
 
 	const int globalTid = blockIdx.x * blockDim.x + threadIdx.x;
 	const int numThreads = blockDim.x * gridDim.x;
+
+
+	// shared x and fhat values
+	__shared__ cuComplex fhatloc[32];
+
+	float xloc = x[globalTid];
+	cuComplex floc;
+	cuComplex omega;
+	int k_L;
+	
+	floc.real(0);
+	floc.imag(0);
+	
+	
+	
+	// copy the data over
+	if( globalTid < N )
+	{
+		fhatloc[globalTid] = fhat[globalTid];
+	}
+
+	__syncthreads();
 	
 	if( globalTid < M )
 	{
-		for (int k_L = 0; k_L < N; k_L++)
-		{
-			cuComplex omega;
-			omega.imag( -K2PI * ((float)(k_L - N/2)) * x[globalTid] );
-			f[globalTid] += fhat[k_L] * cexpf( omega );
+
+	
+		for ( k_L = 0; k_L < N; k_L++)
+		{			
+			omega.real(0);
+			omega.imag( -K2PI * ((float)(k_L - N/2)) * xloc );
+			floc = floc + fhat[k_L] * cexpf( omega );
 		}
+
+
+		
 	}
+
+	__syncthreads();
+
+
+	if( globalTid < M )
+	{
+		f[globalTid] = floc;
+	}
+	//if( globalTid < M && globalTid < N)
+	//{
+	//	f[globalTid] = fhatloc[globalTid];
+	//}
 
 }
 
@@ -156,12 +197,14 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
 	
 	cuComplex* f_loc = new cuComplex[plan->M_total];
 	cuComplex* f_dev = (cuComplex*)AllocateDevice( plan->M_total * sizeof(cuComplex) );
-	
+
+
+		
 	// zero out the fhat
 	cudaMemset(f_dev, 0, (plan->M_total)*sizeof(cuComplex));
 
 // copy from fftw_complex to cuComplex
-#if CUDA_SAFE_COMPLEX
+#if CUDA_SAFE_COMPLEX 
 	for( int ii = 0; ii < plan->N_total; ii++ )
 	{
 		fhat_loc[ii].real( plan->f_hat[ii][0] );
@@ -183,14 +226,17 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
 	// now lets get the data back
 	CopyFromDevice( f_dev, f_loc, plan->M_total * sizeof(cuComplex) );
 
+	//memset( f_loc, 0, (plan->M_total)*sizeof(cuComplex) );
 	// copy back to the plan
-#if CUDA_SAFE_COMPLEX
+#if CUDA_SAFE_COMPLEX 
+	printf("here \n");
         for( int ii = 0; ii < plan->M_total; ii++ )
         {
                 plan->f[ii][0] = f_loc[ii].real();
                 plan->f[ii][1] = f_loc[ii].imag();
         }
 #else
+	printf("here 2 \n");
         memcpy( f_loc, plan->f, 2*sizeof(float)*(plan->M_total) );
 #endif
 	// dealloc the memory on the device
@@ -198,6 +244,10 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
 	FreeDevice( f_dev );
 	FreeDevice( fhat_dev );
 
+	// delete local memory
+	delete [] f_loc;
+	delete [] fhat_loc;
+	delete [] x_loc;
 }
 
 void Cuda_NFFT_trafo_direct_2d(nfftf_plan* plan)

@@ -47,9 +47,7 @@ static void simple_test_nfft_1d(void)
   int N = 14;
   int M = 19;
 
-  double t0, t1;
   timespec start_time, end_time;
-  double delta = 0;
 
   const char *error_str;
 

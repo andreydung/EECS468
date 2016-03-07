@@ -3,7 +3,6 @@
 
 #include "nfft3mp.h"
 
-#define CUDA_SAFE_COMPLEX 1
 
 void CopyToDevice(void* device, void* host, size_t size);
 void CopyFromDevice(void* device, void* host, size_t size);
