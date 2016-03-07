@@ -21,8 +21,8 @@ test_cuda.o: ../../cuda/test_cuda.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
  /usr/include/bits/pthreadtypes.h /usr/include/alloca.h \
  /usr/include/bits/stdlib-bsearch.h /usr/include/bits/stdlib-float.h \
- ../../include/nfft3mp.h ../../include/nfft3.h /usr/include/fftw3.h \
- ../../cuda/nfft_cuda.h
+ /usr/include/bits/timex.h ../../include/nfft3mp.h ../../include/nfft3.h \
+ /usr/include/fftw3.h ../../cuda/nfft_cuda.h
 
 /usr/include/stdc-predef.h:
 
@@ -115,6 +115,8 @@ test_cuda.o: ../../cuda/test_cuda.cpp /usr/include/stdc-predef.h \
 /usr/include/bits/stdlib-bsearch.h:
 
 /usr/include/bits/stdlib-float.h:
+
+/usr/include/bits/timex.h:
 
 ../../include/nfft3mp.h:
 

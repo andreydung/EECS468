@@ -357,7 +357,7 @@ top_builddir = ..
 top_srcdir = ../..
 AM_CPPFLAGS = -I$(top_srcdir)/include
 NVCC = nvcc
-NVCC_INCLUDES = -I/usr/local/cuda/include
+NVCC_INCLUDES = -I/usr/local/cuda/include -I/usr/local/cuda-7.0/include
 
 # compiling flags
 NVCC_CXXFLAGS = -O2 -G -dc

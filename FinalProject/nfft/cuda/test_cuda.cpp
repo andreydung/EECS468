@@ -21,23 +21,35 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define NFFT_PRECISION_SINGLE
 
-
 #define USING_ADJOINT 0
+
+#define START_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start_time);
+#define END_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end_time);
+
+float elapsed_s( timespec start, timespec end )
+{
+	float elapsed = end.tv_nsec - start.tv_nsec;
+	elapsed = elapsed * 1.0E-9;
+	return elapsed;
+} 
 
 #include "nfft3mp.h"
 #include "nfft_cuda.h"
 
 static void simple_test_nfft_1d(void)
 {
-  NFFT(plan) p;
+  nfftf_plan p;
 
   int N = 14;
   int M = 19;
 
-  NFFT_R t0, t1;
+  double t0, t1;
+  timespec start_time, end_time;
+  double delta = 0;
 
   const char *error_str;
 
@@ -64,33 +76,41 @@ static void simple_test_nfft_1d(void)
   }
 
   /** direct trafo and show the result */
-  t0 = NFFT(clock_gettime_seconds)();
+  START_TIMER;
   NFFT(trafo_direct)(&p);
-  t1 = NFFT(clock_gettime_seconds)(); 
+  END_TIMER;
   NFFT(vpr_complex)(p.f,p.M_total,"ndft, vector f");
-  printf(" took %.2" NFFT__FES__ " seconds.\n",t1-t0);
+  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+
+  /** cuda direct trafo and show the result */
+  START_TIMER;
+  Cuda_NFFT_trafo_direct_1d(&p);
+  END_TIMER;
+  NFFT(vpr_complex)(p.f,p.M_total,"cu_ndft, vector f");
+  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
   /** approx. trafo and show the result */
-  t0 = NFFT(clock_gettime_seconds)(); 
+  START_TIMER;
   NFFT(trafo)(&p);
-  t1 = NFFT(clock_gettime_seconds)(); 
+  END_TIMER; 
   NFFT(vpr_complex)(p.f,p.M_total,"nfft, vector f");
-  printf(" took %.2" NFFT__FES__ " seconds.\n",t1-t0);
+  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
 #if USING_ADJOINT
   /** approx. adjoint and show the result */
-  t0 = NFFT(clock_gettime_seconds)();
+  START_TIMER;
   NFFT(adjoint_direct)(&p);
-  t1 = NFFT(clock_gettime_seconds)(); 
+  END_TIMER; 
   NFFT(vpr_complex)(p.f_hat,p.N_total,"adjoint ndft, vector f_hat");
-  printf(" took %.2" NFFT__FES__ " seconds.\n",t1-t0);
-
+  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  
   /** approx. adjoint and show the result */
-  t0 = NFFT(clock_gettime_seconds)();
+  START_TIMER;
   NFFT(adjoint)(&p);
-  t1 = NFFT(clock_gettime_seconds)(); 
+  END_TIMER; 
   NFFT(vpr_complex)(p.f_hat,p.N_total,"adjoint nfft, vector f_hat");
-  printf(" took %.2" NFFT__FES__ " seconds.\n",t1-t0);
+  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+
 #endif
 
   /** finalise the one dimensional plan */
