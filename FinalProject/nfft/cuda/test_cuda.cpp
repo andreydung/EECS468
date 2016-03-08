@@ -27,8 +27,11 @@
 
 #define USING_ADJOINT 0
 
-#define START_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start_time);
-#define END_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end_time);
+/*
+#define TIMER_INIT timespec start_time, end_time
+#define START_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start_time)
+#define END_TIMER clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end_time)
+#define TIMER_DIFF elapsed_s( start_time, end_time )
 
 float elapsed_s( timespec start, timespec end )
 {
@@ -36,7 +39,8 @@ float elapsed_s( timespec start, timespec end )
 	elapsed = elapsed * 1.0E-9;
 	return elapsed;
 } 
-
+*/
+#include "nfft_timer.h"
 #include "nfft3mp.h"
 #include "nfft_cuda.h"
 
@@ -44,10 +48,12 @@ static void simple_test_nfft_1d(void)
 {
   nfftf_plan p;
 
-  int N = 14;
-  int M = 19;
+  int N = 4096;
+  int M = 2*N;
+  int K = 16;
 
-  timespec start_time, end_time;
+  //timespec start_time, end_time;
+  TIMER_INIT;
 
   const char *error_str;
 
@@ -63,7 +69,7 @@ static void simple_test_nfft_1d(void)
 
   /** init pseudo random Fourier coefficients and show them */
   NFFT(vrand_unit_complex)(p.f_hat,p.N_total);
-  NFFT(vpr_complex)(p.f_hat, p.N_total, "given Fourier coefficients, vector f_hat");
+  NFFT(vpr_complex)(p.f_hat, K, "given Fourier coefficients, vector f_hat");
 
   /** check for valid parameters before calling any trafo/adjoint method */
   error_str = NFFT(check)(&p);
@@ -77,21 +83,21 @@ static void simple_test_nfft_1d(void)
   START_TIMER;
   NFFT(trafo_direct)(&p);
   END_TIMER;
-  NFFT(vpr_complex)(p.f,p.M_total,"ndft, vector f");
+  NFFT(vpr_complex)(p.f, K, "ndft, vector f");
   printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
   /** cuda direct trafo and show the result */
   START_TIMER;
   Cuda_NFFT_trafo_direct_1d(&p);
   END_TIMER;
-  NFFT(vpr_complex)(p.f,p.M_total,"cu_ndft, vector f");
+  NFFT(vpr_complex)(p.f, K ,"cu_ndft, vector f");
   printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
   /** approx. trafo and show the result */
   START_TIMER;
   NFFT(trafo)(&p);
   END_TIMER; 
-  NFFT(vpr_complex)(p.f,p.M_total,"nfft, vector f");
+  NFFT(vpr_complex)(p.f, K ,"nfft, vector f");
   printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
 #if USING_ADJOINT
@@ -199,11 +205,11 @@ int main(void)
 {
   printf("1) computing a one dimensional ndft, nfft and an adjoint nfft\n\n");
   simple_test_nfft_1d();
-
+/*
   getc(stdin);
 
   printf("2) computing a two dimensional ndft, nfft and an adjoint nfft\n\n");
   simple_test_nfft_2d();
-
+*/
   return EXIT_SUCCESS;
 }

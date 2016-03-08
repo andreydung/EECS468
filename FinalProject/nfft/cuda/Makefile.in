@@ -107,7 +107,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_test_cuda_OBJECTS = test_cuda.$(OBJEXT) nfft_cuda.$(OBJEXT)
+am_test_cuda_OBJECTS = test_cuda.$(OBJEXT) nfft_cuda.$(OBJEXT) \
+	nfft_timer.$(OBJEXT)
 test_cuda_OBJECTS = $(am_test_cuda_OBJECTS)
 test_cuda_DEPENDENCIES = $(top_builddir)/libnfft3@PREC_SUFFIX@.la
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -364,7 +365,7 @@ NVCC_CXXFLAGS = -O2 -G -dc
 
 # the linking flags
 NVCC_LINKFLAGS = -L/usr/local/cuda/lib64 -lcudart
-test_cuda_SOURCES = test_cuda.cpp nfft_cuda.cu
+test_cuda_SOURCES = test_cuda.cpp nfft_cuda.cu nfft_timer.cpp
 test_cuda_LDFLAGS = gpu_link.o $(NVCC_LINKFLAGS) 
 test_cuda_LDADD = $(top_builddir)/libnfft3@PREC_SUFFIX@.la @fftw3_LDFLAGS@ @fftw3_LIBS@
 test_cuda_AR = $(NVCC) -lib -o
@@ -462,6 +463,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nfft_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_cuda.Po@am__quote@
 
 .cpp.o:
