@@ -13,6 +13,7 @@ void Cuda_NFFT_trafo_1d(nfftf_plan* plan);
 void Cuda_NFFT_trafo_2d(nfftf_plan* plan);
 
 void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal);
+void Cuda_NFFT_adjoint_direct_1d(nfftf_plan* plan, bool horizontal);
 void Cuda_NFFT_trafo_direct_2d(nfftf_plan* plan);
 
 

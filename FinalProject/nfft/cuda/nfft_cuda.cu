@@ -87,7 +87,7 @@ __device__ __forceinline__ cuComplex cexpf (cuComplex z)
 __global__ void cudaNFTDirect1D_horizontal(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
 {
 
-	// taking x,fhat -> f
+	// taking x,fhat -> f,k
 	// --------------------------------------------------------------
 	// #pragma omp parallel for default(shared) private(j)
 	// for (j = 0; j < ths->M_total; j++)
@@ -180,7 +180,7 @@ __global__ void cudaNFTDirect1D_horizontal(float* x, cuComplex* f, cuComplex* fh
 __global__ void cudaNFTDirect1D_vertical(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
 {
 
-	// taking x,fhat -> f
+	// taking x,fhat -> f,k
 	// --------------------------------------------------------------
 	// #pragma omp parallel for default(shared) private(j)
 	// for (j = 0; j < ths->M_total; j++)
@@ -292,6 +292,97 @@ __global__ void cudaNFTDirect1D_vertical(float* x, cuComplex* f, cuComplex* fhat
 	
 
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+///
+///         --- 1D NFT Direct Adjoint kernal horizontal (It 1) ------------------
+///
+/// define the 1D NFT Direct Adjoint Kernel 
+/// Addapted from the NFFT package trafo_direct
+/// Implemented in the horizontal configuration (i.e. N < M )
+__global__ void cudaNFTDirect1DA(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
+{
+
+	// taking f,k -> x,fhat
+	// --------------------------------------------------------------
+	// #pragma omp parallel for default(shared) private(k_L)
+        // for (k_L = 0; k_L < ths->N_total; k_L++)
+        // {
+        //	INT j;
+        //	for (j = 0; j < ths->M_total; j++)
+        //	{
+        //		R omega = K2PI * ((R)(k_L - (ths->N_total/2))) * ths->x[j];
+        //		f_hat[k_L] += f[j] * BASE(II * omega);
+        //	}
+        // }
+	const int globalTid = blockIdx.x * blockDim.x + threadIdx.x;
+	const int numThreads = blockDim.x * gridDim.x;
+	
+
+	// shared x and fhat values
+	__shared__ cuComplex floc[SIZE_1D];
+	__shared__ float     xloc[SIZE_1D];
+	
+	cuComplex fhatloc;
+	cuComplex omega;
+	
+	fhatloc = 0;
+	int k_L = globalTid;
+	__syncthreads();
+
+	int maxj = (M-1)/SIZE_1D + 1;
+
+	// we need to do the following N times
+	for( int j_Out = 0; j_Out < maxj; j_Out++ )
+	{
+	
+		int tid = SIZE_1D * j_Out + threadIdx.x;
+		// copy the data over
+		if( tid < M )
+		{
+			floc[threadIdx.x] = f[tid];
+			xloc[threadIdx.x] = x[tid];
+		}
+
+		__syncthreads();
+	
+		if( globalTid < N )
+		{	
+
+			int maxM = 0;
+			if( (j_Out + 1)*SIZE_1D > M )
+			{
+				maxM = M - j_Out*SIZE_1D;
+			}
+			else
+			{
+				maxM = SIZE_1D;
+			}
+
+			for ( int j = 0; j < maxM; j++)
+			{			
+				omega.real(0);
+				omega.imag( K2PI * ((float)(k_L - N/2)) * xloc[j] );
+
+
+				fhatloc += ( f[j] * cexpf( omega ) );
+			}
+
+		}
+
+		__syncthreads();
+	}
+
+	__syncthreads();
+
+	if( globalTid < N )
+	{
+		fhat[globalTid] = fhatloc;
+	}
+	
+
+}
+
 
 #if 0
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -522,7 +613,7 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal)
 	// now we call the kernel (recall: <<< num Blocks, threads per block >>> )
 	int numBlocks;
 	int numTiles; 
-
+	cudaError_t err = cudaSuccess;
 	if( horizontal )
 	{	
 		numBlocks = (plan->M_total - 1)/SIZE_1D+ 1;
@@ -533,16 +624,21 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal)
 		numBlocks = plan->M_total;
 		numTiles = ((plan->N_total)-1)/SIZE_1D + 1; 
 	}
-	printf("Num Blocks %i, size %i, Num Tiles %i\n", numBlocks, SIZE_1D, numTiles);
+	printf("\nNum Blocks %i, size %i, Num Tiles %i\n", numBlocks, SIZE_1D, numTiles);
 
 	if( horizontal )
 		cudaNFTDirect1D_horizontal <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
 	else
 		cudaNFTDirect1D_vertical <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
 
-	cudaThreadSynchronize();
+		cudaThreadSynchronize();
         END_TIMER;
         time1 = TIMER_DIFF;
+	
+	err = cudaPeekAtLastError();
+
+	if( err != cudaSuccess ) 
+		printf("%s \n",  cudaGetErrorString(err) );	
 
 	START_TIMER;
 	// now lets get the data back
@@ -551,7 +647,6 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal)
 	//memset( f_loc, 0, (plan->M_total)*sizeof(cuComplex) );
 	// copy back to the plan
 #if CUDA_SAFE_COMPLEX 
-	printf("here \n");
         for( int ii = 0; ii < plan->M_total; ii++ )
         {
                 plan->f[ii][0] = f_loc[ii].real();
@@ -560,6 +655,103 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal)
 #else
 	printf("here 2 \n");
         memcpy( f_loc, plan->f, 2*sizeof(float)*(plan->M_total) );
+#endif
+	// dealloc the memory on the device
+	FreeDevice( x_dev );
+	FreeDevice( f_dev );
+	FreeDevice( fhat_dev );
+
+	// delete local memory
+	delete [] f_loc;
+	delete [] fhat_loc;
+
+	END_TIMER;
+        time2 = TIMER_DIFF;
+
+	printf("times: %E (%E) %E s\n", time0, time1, time2 );
+
+}
+
+void Cuda_NFFT_adjoint_direct_1d(nfftf_plan* plan, bool horizontal)
+{
+	// lets do some profiling
+	TIMER_INIT;
+	float time0, time1, time2;
+	START_TIMER;
+	// allocate x, f, fhat on the device
+	float* x_loc = plan->x;
+	float* x_dev = (float*)AllocateDevice( plan->M_total * sizeof(float) );
+
+	cuComplex* fhat_loc = new cuComplex[plan->N_total];
+	cuComplex* fhat_dev = (cuComplex*)AllocateDevice( plan->N_total * sizeof(cuComplex) );
+	
+	cuComplex* f_loc = new cuComplex[plan->M_total];
+	cuComplex* f_dev = (cuComplex*)AllocateDevice( plan->M_total * sizeof(cuComplex) );
+
+
+		
+	// zero out the fhat
+	//cudaMemset(f_dev, 0, (plan->M_total)*sizeof(cuComplex));
+
+	// copy from fftw_complex to cuComplex
+#if CUDA_SAFE_COMPLEX 
+	for( int ii = 0; ii < plan->M_total; ii++ )
+	{
+		f_loc[ii].real( plan->f[ii][0] );
+		f_loc[ii].imag( plan->f[ii][1] );
+	}
+#else
+	memcpy( f_loc, plan->f, 2*sizeof(float)*(plan->M_total) );
+#endif	
+
+	// now lets copy the f and x to the device
+	CopyToDevice( x_dev, x_loc, (plan->M_total) * sizeof(float) );
+	CopyToDevice( f_dev, f_loc, (plan->M_total) * sizeof(cuComplex) );
+
+
+	printf("Size N %i, Size M %i \n", plan->N_total, plan->M_total);
+	END_TIMER;
+	time0 = TIMER_DIFF;
+
+	START_TIMER;
+	// now we call the kernel (recall: <<< num Blocks, threads per block >>> )
+	int numBlocks;
+	int numTiles; 
+	cudaError_t err = cudaSuccess;
+	
+	numBlocks = (plan->N_total - 1)/SIZE_1D+ 1;
+	numTiles = ((plan->M_total)-1)/SIZE_1D + 1;
+	
+	printf("\nNum Blocks %i, size %i, Num Tiles %i\n", numBlocks, SIZE_1D, numTiles);
+
+	cudaNFTDirect1DA <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
+	
+
+	cudaThreadSynchronize();
+        END_TIMER;
+        time1 = TIMER_DIFF;
+
+	err = cudaPeekAtLastError();
+
+	if( err != cudaSuccess ) 
+		printf("%s \n",  cudaGetErrorString(err) );	
+
+
+	START_TIMER;
+	// now lets get the data back
+	CopyFromDevice( fhat_dev, fhat_loc, plan->N_total * sizeof(cuComplex) );
+
+	//memset( f_loc, 0, (plan->M_total)*sizeof(cuComplex) );
+	// copy back to the plan
+#if CUDA_SAFE_COMPLEX 
+        for( int ii = 0; ii < plan->N_total; ii++ )
+        {
+                plan->f_hat[ii][0] = fhat_loc[ii].real();
+		plan->f_hat[ii][1] = fhat_loc[ii].imag();
+	}
+#else
+	printf("here 2 \n");
+        memcpy( fhat_loc, plan->fhat, 2*sizeof(float)*(plan->N_total) );
 #endif
 	// dealloc the memory on the device
 	FreeDevice( x_dev );

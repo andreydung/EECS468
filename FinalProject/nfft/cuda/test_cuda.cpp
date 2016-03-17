@@ -27,7 +27,9 @@
 
 #define NFFT_PRECISION_SINGLE
 
-#define USING_ADJOINT 0
+#define USING_ADJOINT 1
+
+#define INPUT_SET 4096
 
 /*
 #define TIMER_INIT timespec start_time, end_time
@@ -70,13 +72,13 @@ void simple_test_nfft_1d(bool sparse)
 
   if( sparse )
   {
-	N = 4096*2*2;
+	N = INPUT_SET;
 	M = 16;
 	K = 16;
   }
   else
   {
-	N = 4096*2*2;
+	N = INPUT_SET;
 	M = 2*N;
 	K = 16;
 
@@ -136,11 +138,11 @@ void simple_test_nfft_1d(bool sparse)
   /** cuda direct trafo and show the result */
   if( sparse )
   {
-  START_TIMER;
-  Cuda_NFFT_trafo_direct_1d(&p, false);
-  END_TIMER;
-  NFFT(vpr_complex)(p.f, K ,"cu_ndft[v], vector f");
-  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
+  	START_TIMER;
+  	Cuda_NFFT_trafo_direct_1d(&p, false);
+  	END_TIMER;
+  	NFFT(vpr_complex)(p.f, K ,"cu_ndft[v], vector f");
+  	printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
   }
 
   /** approx. trafo and show the result */
@@ -151,19 +153,38 @@ void simple_test_nfft_1d(bool sparse)
   printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
 
 #if USING_ADJOINT
+
+  delete [] vcomp;
+  // reallocate for the adjoint
+  vcomp = new fftwf_complex[p.N_total]; 
+
   /** approx. adjoint and show the result */
   START_TIMER;
   NFFT(adjoint_direct)(&p);
   END_TIMER; 
-  NFFT(vpr_complex)(p.f_hat,p.N_total,"adjoint ndft, vector f_hat");
-  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  NFFT(vpr_complex)(p.f_hat, K,"adjoint ndft, vector f_hat");
+  printf(" took %E seconds.L2 %E \n", elapsed_s( start_time, end_time), 0.0 );
   
+  // copy the complex data over
+  for( int ii = 0; ii < p.N_total; ii++ )
+  {
+	vcomp[ii][0] = p.f_hat[ii][0];
+	vcomp[ii][1] = p.f_hat[ii][1];
+  }
+  /** cuda direct trafo and show the result */
+  START_TIMER;
+  Cuda_NFFT_adjoint_direct_1d(&p, true);
+  END_TIMER;
+  NFFT(vpr_complex)(p.f_hat, K ," adjoint cu_ndft[h], vector f");
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f_hat, p.N_total) );
+ 
+
   /** approx. adjoint and show the result */
   START_TIMER;
   NFFT(adjoint)(&p);
   END_TIMER; 
-  NFFT(vpr_complex)(p.f_hat,p.N_total,"adjoint nfft, vector f_hat");
-  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  NFFT(vpr_complex)(p.f_hat, K,"adjoint nfft, vector f_hat");
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f_hat, p.N_total));
 
 #endif
 
