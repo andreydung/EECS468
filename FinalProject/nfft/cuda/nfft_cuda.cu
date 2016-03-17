@@ -39,13 +39,16 @@ typedef thrust::complex<float> cuComplex;
 // 2-D uses SIZE_X*SIZE_Y
 // 3-D uses SIZE_X*SIZE_Y*SIZE_Z
 
-#define SIZE_X 8
-#define SIZE_Y 8
-#define SIZE_Z 8
+#define SIZE1_X 1024
+#define SIZE2_X 8
+#define SIZE2_Y 8
+#define SIZE3_X 8
+#define SIZE3_Y 8
+#define SIZE3_Z 8
 
-#define SIZE_1D (SIZE_X*SIZE_Y*SIZE_Z)
-#define SIZE_2D (SIZE_X*SIZE_Y)
-#define SIZE_3D SIZE_1D
+#define SIZE_1D (SIZE1_X)
+#define SIZE_2D (SIZE2_X*SIZE2_Y)
+#define SIZE_3D (SIZE3_X*SIZE3_Y*SIZE3_Z)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ///
@@ -76,11 +79,12 @@ __device__ __forceinline__ cuComplex cexpf (cuComplex z)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ///
-///         --- 1D NFT Direct Transform kernal (It 1) ------------------
+///         --- 1D NFT Direct Transform kernal horizontal (It 1) ------------------
 ///
 /// define the 1D NFT Direct Transform Kernel 
 /// Addapted from the NFFT package trafo_direct
-__global__ void cudaNFTDirect1D(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
+/// Implemented in the horizontal configuration (i.e. N < M )
+__global__ void cudaNFTDirect1D_horizontal(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
 {
 
 	// taking x,fhat -> f
@@ -161,6 +165,129 @@ __global__ void cudaNFTDirect1D(float* x, cuComplex* f, cuComplex* fhat, int N, 
 	if( globalTid < M )
 	{
 		f[globalTid] = floc;
+	}
+	
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+///
+///         --- 1D NFT Direct Transform kernal Vertical (It 1) ------------------
+///
+/// define the 1D NFT Direct Transform Kernel 
+/// Addapted from the NFFT package trafo_direct
+/// Implemented in the vertical configuration (i.e. N > M )
+__global__ void cudaNFTDirect1D_vertical(float* x, cuComplex* f, cuComplex* fhat, int N, int M)
+{
+
+	// taking x,fhat -> f
+	// --------------------------------------------------------------
+	// #pragma omp parallel for default(shared) private(j)
+	// for (j = 0; j < ths->M_total; j++)
+	// {
+	// 	INT k_L;
+	//	for (k_L = 0; k_L < ths->N_total; k_L++)
+	//	{
+	//		R omega = K2PI * ((R)(k_L - ths->N_total/2)) * ths->x[j];
+	//		f[j] += f_hat[k_L] * BASE(-II * omega);
+	//	}
+	// }
+
+	const int globalTid = blockIdx.x;
+	const int numThreads = blockDim.x * gridDim.x;
+	const int blockSize = blockDim.x;
+	const int tid = threadIdx.x;
+
+	// shared x and fhat values
+	__shared__ cuComplex fhatloc[SIZE_1D];
+	__shared__ cuComplex tempSum; // temporary sum location for parallel reduce
+
+	float xloc;
+	cuComplex floc;
+	cuComplex omega;
+	
+	floc = 0;
+	if( globalTid < M )
+	{
+		xloc = x[globalTid];
+	}
+	__syncthreads();
+
+	int maxK = (N-1)/SIZE_1D + 1;
+
+	// we need to do the following N times
+	for( int k_Out = 0; k_Out < maxK; k_Out++ )
+	{
+	
+		int ktid = SIZE_1D * k_Out + threadIdx.x;
+		
+		int k_L = threadIdx.x;
+
+		// copy the data over
+		if( ktid < N )
+		{
+			fhatloc[threadIdx.x] = fhat[ktid];
+		
+				
+			// apply the FT
+			omega.real(0);
+			omega.imag( -K2PI * ((float)(k_L + k_Out*SIZE_1D - N/2)) * xloc );
+
+
+			fhatloc[k_L] = ( fhatloc[k_L] * cexpf( omega ) );
+		
+		}
+		else
+		{
+			fhatloc[k_L] = 0;
+		}
+
+		__syncthreads();
+	
+		// now we do the reduce
+		if (blockSize >= 1024) 
+		{ 
+			if (tid < 512) { fhatloc[tid] += fhatloc[tid + 512]; } __syncthreads(); 
+		}  
+		if (blockSize >=  512) 
+		{ 
+			if (tid < 256) { fhatloc[tid] += fhatloc[tid + 256]; } __syncthreads(); 
+		}  
+		if (blockSize >=  256) 
+		{ 
+			if (tid < 128) { fhatloc[tid] += fhatloc[tid + 128]; } __syncthreads(); 
+		}  
+		if (blockSize >=  128) 
+		{ 
+			if (tid <  64) { fhatloc[tid] += fhatloc[tid +  64]; } __syncthreads(); 
+		}  
+		if (tid < 32) 
+		{  
+			if (blockSize >= 64) fhatloc[tid] += fhatloc[tid + 32];   
+			if (blockSize >= 32) fhatloc[tid] += fhatloc[tid + 16];   
+			if (blockSize >= 16) fhatloc[tid] += fhatloc[tid + 8];   
+			if (blockSize >=  8) fhatloc[tid] += fhatloc[tid + 4];   
+			if (blockSize >=  4) fhatloc[tid] += fhatloc[tid + 2];   
+			if (blockSize >=  2) fhatloc[tid] += fhatloc[tid + 1];  
+		}  
+
+		// now copy the data over
+		if (tid == 0) 
+		{  
+			if( k_Out == 0 ) 
+				tempSum = fhatloc[0];  
+			else
+				tempSum = tempSum + fhatloc[0];
+		} 
+
+		__syncthreads();
+	}
+
+	__syncthreads();
+
+	if( globalTid < M && (tid == 0) )
+	{
+		f[globalTid] = tempSum;
 	}
 	
 
@@ -350,7 +477,7 @@ void FreeDevice(void* p)
 	cudaFree(p);	
 }
 
-void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
+void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan, bool horizontal)
 {
 	// lets do some profiling
 	TIMER_INIT;
@@ -371,7 +498,7 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
 	// zero out the fhat
 	//cudaMemset(f_dev, 0, (plan->M_total)*sizeof(cuComplex));
 
-// copy from fftw_complex to cuComplex
+	// copy from fftw_complex to cuComplex
 #if CUDA_SAFE_COMPLEX 
 	for( int ii = 0; ii < plan->N_total; ii++ )
 	{
@@ -387,15 +514,31 @@ void Cuda_NFFT_trafo_direct_1d(nfftf_plan* plan)
 	CopyToDevice( fhat_dev, fhat_loc, (plan->N_total) * sizeof(cuComplex) );
 
 
-	printf("%i %i \n", plan->N_total, plan->M_total);
+	printf("Size N %i, Size M %i \n", plan->N_total, plan->M_total);
 	END_TIMER;
 	time0 = TIMER_DIFF;
 
 	START_TIMER;
 	// now we call the kernel (recall: <<< num Blocks, threads per block >>> )
-	int numBlocks = (plan->N_total - 1)/SIZE_1D+ 1;
-	printf("Num Blocks %i, size %i\n", numBlocks, SIZE_1D);
-	cudaNFTDirect1D <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
+	int numBlocks;
+	int numTiles; 
+
+	if( horizontal )
+	{	
+		numBlocks = (plan->M_total - 1)/SIZE_1D+ 1;
+		numTiles = ((plan->N_total)-1)/SIZE_1D + 1;
+	}
+	else
+	{
+		numBlocks = plan->M_total;
+		numTiles = ((plan->N_total)-1)/SIZE_1D + 1; 
+	}
+	printf("Num Blocks %i, size %i, Num Tiles %i\n", numBlocks, SIZE_1D, numTiles);
+
+	if( horizontal )
+		cudaNFTDirect1D_horizontal <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
+	else
+		cudaNFTDirect1D_vertical <<< numBlocks, SIZE_1D >>> ( x_dev, f_dev, fhat_dev, plan->N_total, plan->M_total );
 
 	cudaThreadSynchronize();
         END_TIMER;

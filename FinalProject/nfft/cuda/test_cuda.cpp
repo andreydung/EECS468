@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <complex>
+
 
 #define NFFT_PRECISION_SINGLE
 
@@ -44,13 +46,41 @@ float elapsed_s( timespec start, timespec end )
 #include "nfft3mp.h"
 #include "nfft_cuda.h"
 
-static void simple_test_nfft_1d(void)
+double compute_error(fftwf_complex* x, fftwf_complex* y, int len)
+{
+	double error = 0;
+
+	for( int ii = 0; ii < len; ii++ )
+	{
+		double tempR = x[ii][0] - y[ii][0];
+		double tempI = x[ii][1] - y[ii][1];
+		error = error + tempR*tempR + tempI*tempI;
+	}
+
+	return error;
+}
+
+
+void simple_test_nfft_1d(bool sparse)
 {
   nfftf_plan p;
 
-  int N = 4096;
-  int M = 2*N;
-  int K = 16;
+
+  int N, M, K;
+
+  if( sparse )
+  {
+	N = 4096*2*2;
+	M = 16;
+	K = 16;
+  }
+  else
+  {
+	N = 4096*2*2;
+	M = 2*N;
+	K = 16;
+
+  }
 
   //timespec start_time, end_time;
   TIMER_INIT;
@@ -59,6 +89,10 @@ static void simple_test_nfft_1d(void)
 
   /** init an one dimensional plan */
   NFFT(init_1d)(&p, N, M);
+
+
+  // declare the comparison vector
+  fftwf_complex* vcomp = new fftwf_complex[p.M_total];
 
   /** init pseudo random nodes */
   NFFT(vrand_shifted_unit_double)(p.x, p.M_total);
@@ -84,21 +118,37 @@ static void simple_test_nfft_1d(void)
   NFFT(trafo_direct)(&p);
   END_TIMER;
   NFFT(vpr_complex)(p.f, K, "ndft, vector f");
-  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), 0.0f  );
 
+  // copy the complex data over
+  for( int ii = 0; ii < p.M_total; ii++ )
+  {
+	vcomp[ii][0] = p.f[ii][0];
+	vcomp[ii][1] = p.f[ii][1];
+  }
   /** cuda direct trafo and show the result */
   START_TIMER;
-  Cuda_NFFT_trafo_direct_1d(&p);
+  Cuda_NFFT_trafo_direct_1d(&p, true);
   END_TIMER;
-  NFFT(vpr_complex)(p.f, K ,"cu_ndft, vector f");
-  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  NFFT(vpr_complex)(p.f, K ,"cu_ndft[h], vector f");
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
+
+  /** cuda direct trafo and show the result */
+  if( sparse )
+  {
+  START_TIMER;
+  Cuda_NFFT_trafo_direct_1d(&p, false);
+  END_TIMER;
+  NFFT(vpr_complex)(p.f, K ,"cu_ndft[v], vector f");
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
+  }
 
   /** approx. trafo and show the result */
   START_TIMER;
   NFFT(trafo)(&p);
   END_TIMER; 
   NFFT(vpr_complex)(p.f, K ,"nfft, vector f");
-  printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
+  printf(" took %E seconds. L2 %E \n", elapsed_s( start_time, end_time), compute_error(vcomp, p.f, p.M_total) );
 
 #if USING_ADJOINT
   /** approx. adjoint and show the result */
@@ -116,6 +166,10 @@ static void simple_test_nfft_1d(void)
   printf(" took %E seconds.\n", elapsed_s( start_time, end_time) );
 
 #endif
+
+
+  // free the comparison vector
+  delete [] vcomp;
 
   /** finalise the one dimensional plan */
   NFFT(finalize)(&p);
@@ -203,8 +257,11 @@ static void simple_test_nfft_2d(void)
 
 int main(void)
 {
-  printf("1) computing a one dimensional ndft, nfft and an adjoint nfft\n\n");
-  simple_test_nfft_1d();
+  printf("1) computing a one dimensional ndft, nfft and an adjoint nfft [dense]\n\n");
+  simple_test_nfft_1d(false);
+
+  printf("2) computing a one dimensional ndft, nfft and an adjoint nfft [sparse]\n\n");
+  simple_test_nfft_1d(true);
 /*
   getc(stdin);
 
