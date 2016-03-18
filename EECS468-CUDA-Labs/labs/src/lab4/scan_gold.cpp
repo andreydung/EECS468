@@ -56,7 +56,7 @@ computeGold( float* reference, float* idata, const unsigned int len)
   {
       total_sum += idata[i-1];
       reference[i] = idata[i-1] + reference[i-1];
-  }
+ }
   if (total_sum != reference[len-1])
       printf("Warning: exceeding single-precision accuracy.  Scan will be inaccurate.\n");
   

@@ -46,7 +46,7 @@
 // includes, kernels
 #include <scan_largearray_kernel.cu>  
 
-#define DEFAULT_NUM_ELEMENTS 16000000 
+#define DEFAULT_NUM_ELEMENTS 32 
 #define MAX_RAND 3
 
 
@@ -196,7 +196,7 @@ runTest( int argc, char** argv)
 
     // Run just once to remove startup overhead for more accurate performance 
     // measurement
-    prescanArray(d_odata, d_idata, 16);
+	prescanArray(d_odata, d_idata, 16);
 
     // Run the prescan
     CUT_SAFE_CALL(cutCreateTimer(&timer));
