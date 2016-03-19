@@ -46,7 +46,7 @@
 // includes, kernels
 #include <scan_largearray_kernel.cu>  
 
-#define DEFAULT_NUM_ELEMENTS 32 
+#define DEFAULT_NUM_ELEMENTS 16777216 
 #define MAX_RAND 3
 
 
@@ -162,11 +162,9 @@ runTest( int argc, char** argv)
             }
         break;  
     }    
-
     
     unsigned int timer;
     CUT_SAFE_CALL(cutCreateTimer(&timer));
-
       
     // compute reference solution
     float* reference = (float*) malloc( mem_size);  
@@ -230,7 +228,6 @@ runTest( int argc, char** argv)
         WriteFile(h_data, argv[1], num_elements);
     }
 
-
     // Check if the result is equivalent to the expected soluion
     unsigned int result_regtest = cutComparef( reference, h_data, num_elements);
     printf( "Test %s\n", (1 == result_regtest) ? "PASSED" : "FAILED");
@@ -242,7 +239,6 @@ runTest( int argc, char** argv)
     cudaFree( d_odata);
     cudaFree( d_idata);
 }
-
 
 int ReadFile(float* M, char* file_name, int size)
 {
