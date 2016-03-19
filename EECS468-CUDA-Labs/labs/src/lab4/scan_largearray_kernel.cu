@@ -7,7 +7,7 @@
 #define NUM_BANKS 32
 #define LOG_NUM_BANKS 5
 // Lab4: You can use any other block size you wish.
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 512 
 
 // Lab4: Host Helper Functions (allocate your own data structure...)
 
@@ -103,6 +103,7 @@ __global__ void preScanSingle(float *outArray, float *inArray, int numElements) 
 	
 	outArray[2*tid] = temp[2*tid];
 	outArray[2*tid + 1] = temp[2*tid + 1];
+	__syncthreads();
 }
 
 __global__ void addIncr(float* outArray, float* Incrs) {
@@ -116,22 +117,39 @@ __global__ void addIncr(float* outArray, float* Incrs) {
 void prescanArray(float *outArray, float *inArray, int numElements)
 {
 	int Nblocks = (numElements + BLOCK_SIZE - 1)/BLOCK_SIZE;
-	
-	float* d_sums;	
-	CUDA_SAFE_CALL(cudaMalloc((void**) &d_sums, sizeof(float) * Nblocks));
-	
 	printf("Size of Nblocks: %d \n", Nblocks);	
 	
-	preScan<<<Nblocks, BLOCK_SIZE/2>>>(outArray, inArray, d_sums);
-
 	if (Nblocks <= BLOCK_SIZE/2) {
-		float* d_incrs;
-		CUDA_SAFE_CALL(cudaMalloc((void**) &d_incrs, sizeof(float) * Nblocks ));
-		preScanSingle<<<1, BLOCK_SIZE/2>>>(d_incrs, d_sums, Nblocks);
-		addIncr<<<2*Nblocks, BLOCK_SIZE >>>(outArray, d_incrs);
+		float* sums;	
+		CUDA_SAFE_CALL(cudaMalloc((void**) &sums, sizeof(float) * Nblocks));
+		float* incrs;
+		CUDA_SAFE_CALL(cudaMalloc((void**) &incrs, sizeof(float) * Nblocks ));
+	
+		preScan<<<Nblocks, BLOCK_SIZE/2>>>(outArray, inArray, sums);
+		preScanSingle<<<1, BLOCK_SIZE/2>>>(incrs, sums, Nblocks);
+		addIncr<<<Nblocks, BLOCK_SIZE >>>(outArray, incrs);
 	}
 	else {
-		
+		float* middle;
+		CUDA_SAFE_CALL(cudaMalloc((void**) &middle, sizeof(float) * Nblocks ));
+		float* incrMiddle;
+        CUDA_SAFE_CALL(cudaMalloc((void**) &incrMiddle, sizeof(float) * Nblocks ));
+
+		int Nblocks2 = (Nblocks + BLOCK_SIZE - 1)/BLOCK_SIZE;	
+		printf("Size of Nblocks 2: %d \n", Nblocks2);	
+		float* sums;
+		CUDA_SAFE_CALL(cudaMalloc((void**) &sums, sizeof(float) * Nblocks2));
+        float* incrs;
+		CUDA_SAFE_CALL(cudaMalloc((void**) &incrs, sizeof(float) * Nblocks2));	
+	
+		preScan<<<Nblocks ,  BLOCK_SIZE/2>>>(outArray, inArray, middle);
+		cudaThreadSynchronize();
+		preScan<<<Nblocks2,  BLOCK_SIZE/2>>>(incrMiddle, middle, sums);
+		cudaThreadSynchronize();
+		preScanSingle<<<1,   BLOCK_SIZE/2>>>(incrs, sums, Nblocks2);
+		cudaThreadSynchronize();
+		addIncr<<<Nblocks2,BLOCK_SIZE>>>(incrMiddle, incrs);
+		addIncr<<<Nblocks, BLOCK_SIZE>>>(outArray, incrMiddle);
 	}
 }
 // **===-----------------------------------------------------------===**
