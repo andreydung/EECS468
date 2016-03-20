@@ -64,15 +64,19 @@ __global__ void preScan(float *outArray, float *inArray, float *sums) {
 }
 
 __global__ void preScanSingle(float *outArray, float *inArray, int numElements) {
+	// numElemets does not need to be power of 2
+	
+	if (numElements > BLOCK_SIZE) return;
+	
 	__shared__ float temp[BLOCK_SIZE];
 	
 	int tid = threadIdx.x;
 	int offset = 1;
 
-	temp[2*tid] = inArray[2*tid];
-	temp[2*tid + 1] = inArray[2*tid + 1];
+	temp[2*tid] = (2*tid < numElements) ? inArray[2*tid]:0;
+	temp[2*tid + 1] = (2*tid + 1 < numElements) ? inArray[2*tid + 1]:0;
 
-	for(int d = numElements >> 1; d > 0; d >>= 1) {
+	for(int d = BLOCK_SIZE >> 1; d > 0; d >>= 1) {
 		__syncthreads();
 		if (tid < d) {
 			int ai = offset * (2*tid + 1) - 1;
@@ -83,9 +87,9 @@ __global__ void preScanSingle(float *outArray, float *inArray, int numElements) 
 		offset *= 2;
 	}
 			
-	if (tid == 0) {temp[numElements - 1] = 0;}
+	if (tid == 0) {temp[BLOCK_SIZE - 1] = 0;}
 
-	for (int d = 1; d < numElements; d *= 2) {
+	for (int d = 1; d < BLOCK_SIZE; d *= 2) {
 		offset >>= 1;
 		__syncthreads();
 
@@ -101,8 +105,10 @@ __global__ void preScanSingle(float *outArray, float *inArray, int numElements) 
 	
 	__syncthreads();
 	
-	outArray[2*tid] = temp[2*tid];
-	outArray[2*tid + 1] = temp[2*tid + 1];
+	if (2*tid < numElements) 
+		outArray[2*tid] = temp[2*tid];
+	if (2*tid + 1 < numElements)
+		outArray[2*tid + 1] = temp[2*tid + 1];
 	__syncthreads();
 }
 
@@ -114,12 +120,13 @@ __global__ void addIncr(float* outArray, float* Incrs) {
 // You may need to make multiple kernel calls, make your own kernel
 // function in this file, and then call them from here.
 
-void prescanArray(float *outArray, float *inArray, int numElements)
+void prescanArrayPowerTwo(float *outArray, float *inArray, int numElements)
 {
-	int Nblocks = (numElements + BLOCK_SIZE - 1)/BLOCK_SIZE;
-	printf("Size of Nblocks: %d \n", Nblocks);	
+	//check if power of two
+	if (numElements & (numElements - 1) != 0) return;
 	
-	if (Nblocks <= BLOCK_SIZE/2) {
+	int Nblocks = (numElements + BLOCK_SIZE - 1)/BLOCK_SIZE;
+	if (Nblocks <= BLOCK_SIZE>>1) {
 		float* sums;	
 		CUDA_SAFE_CALL(cudaMalloc((void**) &sums, sizeof(float) * Nblocks));
 		float* incrs;
@@ -136,7 +143,6 @@ void prescanArray(float *outArray, float *inArray, int numElements)
         CUDA_SAFE_CALL(cudaMalloc((void**) &incrMiddle, sizeof(float) * Nblocks ));
 
 		int Nblocks2 = (Nblocks + BLOCK_SIZE - 1)/BLOCK_SIZE;	
-		printf("Size of Nblocks 2: %d \n", Nblocks2);	
 		float* sums;
 		CUDA_SAFE_CALL(cudaMalloc((void**) &sums, sizeof(float) * Nblocks2));
         float* incrs;
@@ -152,6 +158,36 @@ void prescanArray(float *outArray, float *inArray, int numElements)
 		addIncr<<<Nblocks, BLOCK_SIZE>>>(outArray, incrMiddle);
 	}
 }
+
+int floorPowerTwo(int n) {
+	n |= (n >> 1);
+	n |= (n >> 2);
+	n |= (n >> 4);
+	n |= (n >> 8);
+	n |= (n >> 16);
+	return n - (n >> 1);
+}
+
+__global__ void addConstant(float* arr, float* c1, float* c2, int n) {
+	int tid = threadIdx.x;
+	if (tid < n) arr[tid] += *c1 + *c2;
+}
+
+void prescanArray(float *outArray, float *inArray, int numElements) {
+	int n = floorPowerTwo(numElements);
+	
+	printf("Original and rounding size: %d and %d\n", numElements, n);	
+	prescanArrayPowerTwo(outArray, inArray, n);
+
+	if (n < numElements) {
+		printf("Extra for padding\n");
+		preScanSingle<<<1, BLOCK_SIZE/2>>>(outArray + n, inArray + n, numElements - n);	
+		cudaThreadSynchronize();
+	//	addIncr<<<1, numElements - n>>>(outArray + n, constant);
+		addConstant<<<1, numElements - n>>>(outArray + n, outArray+ n - 1, inArray + n, numElements - n);
+	}
+}
+
 // **===-----------------------------------------------------------===**
 
 
