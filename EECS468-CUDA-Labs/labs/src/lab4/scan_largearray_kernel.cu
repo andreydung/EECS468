@@ -174,17 +174,15 @@ __global__ void addConstant(float* arr, float* c1, float* c2, int n) {
 }
 
 void prescanArray(float *outArray, float *inArray, int numElements) {
-	int n = floorPowerTwo(numElements);
-	
-	printf("Original and rounding size: %d and %d\n", numElements, n);	
+	int n = (numElements/BLOCK_SIZE) * BLOCK_SIZE;
+
+	printf("Nearest power of two: %d\n", n);	
 	prescanArrayPowerTwo(outArray, inArray, n);
 
 	if (n < numElements) {
-		printf("Extra for padding\n");
 		preScanSingle<<<1, BLOCK_SIZE/2>>>(outArray + n, inArray + n, numElements - n);	
 		cudaThreadSynchronize();
-	//	addIncr<<<1, numElements - n>>>(outArray + n, constant);
-		addConstant<<<1, numElements - n>>>(outArray + n, outArray+ n - 1, inArray + n, numElements - n);
+		addConstant<<<1, numElements - n>>>(outArray + n, outArray + n - 1, inArray + n - 1, numElements - n);
 	}
 }
 
